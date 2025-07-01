@@ -1,8 +1,8 @@
 // js/ui/UIUpdater.js
-import { HERO_DEFINITIONS } from '../data/heroData.js';
-import { MONSTER_DEFINITIONS } from '../data/monsterData.js';
+
 import { AFFIX_DEFINITIONS } from '../data/itemData.js';
 import { MonsterGroup } from '../entities/MonsterGroup.js';
+import { renderInventory } from './InventoryUI.js';
 
 // --- RÉCUPÉRATION DES ÉLÉMENTS DU DOM ---
 const monsterNameEl = document.getElementById('monster-name');
@@ -15,7 +15,9 @@ const floorDisplayEl = document.getElementById('floor-display');
 const encounterDisplayEl = document.getElementById('encounter-display');
 const progressionControlsEl = document.getElementById('progression-controls');
 const shopAreaEl = document.getElementById('shop-area');
+const saveIndicatorEl = document.getElementById('save-indicator');
 const lootAreaEl = document.getElementById('loot-area');
+const shopControlsEl = document.getElementById('shop-controls');
 
 
 // --- FONCTIONS INTERNES (AIDES) ---
@@ -37,7 +39,7 @@ function updateMonsterUI(monster) {
   monsterHpBarEl.value = monster.currentHp;
 }
 
-function updateHeroesUI(heroes) {
+function updateHeroesUI(heroes, itemToEquip) {
   const existingCardIds = new Set();
   heroes.forEach((hero, index) => {
     existingCardIds.add(hero.id);
@@ -62,6 +64,7 @@ function updateHeroesUI(heroes) {
           <progress class="hero-hp-bar" value="100" max="100"></progress>
           <p class="hero-stats xp-text" data-stat="xp"></p>
           <progress class="hero-xp-bar" value="0" max="100"></progress>
+          <div class="hero-equipment-display"></div>
         </div>
         <div class="hero-controls"></div>
       `;
@@ -80,6 +83,12 @@ function updateHeroesUI(heroes) {
     const xpBar = card.querySelector('.hero-xp-bar');
     xpBar.value = hero.xp;
     xpBar.max = hero.xpToNextLevel;
+    const weaponName = hero.equipment.arme ? hero.equipment.arme.name : 'Mains nues';
+    const armorName = hero.equipment.torse ? hero.equipment.torse.name : 'Aucune armure';
+    card.querySelector('.hero-equipment-display').innerHTML = `
+        <span>Arme: ${weaponName}</span>
+        <span>Torse: ${armorName}</span>
+    `;
     const controls = card.querySelector('.hero-controls');
     controls.innerHTML = `
       ${index > 0 ? `<button class="move-hero-btn up" title="Monter" data-hero-id="${hero.id}" data-direction="up">▲</button>` : `<div class="move-placeholder"></div>`}
@@ -89,6 +98,7 @@ function updateHeroesUI(heroes) {
       heroesAreaEl.insertBefore(card, heroesAreaEl.children[index] || null);
     }
     card.classList.toggle('recovering', hero.status === 'recovering');
+    card.classList.toggle('equip-mode', !!itemToEquip);
   });
   for (const card of Array.from(heroesAreaEl.children)) {
     if (!existingCardIds.has(card.dataset.heroId)) {
@@ -110,15 +120,15 @@ function updateDungeonUI(floor, encounter, maxEncounters, gameStatus) {
   if (gameStatus === 'boss_fight') {
     encounterDisplayEl.textContent = "COMBAT DE BOSS";
   } else if (gameStatus === 'farming_boss_available' || gameStatus === 'floor_cleared') {
-    encounterDisplayEl.textContent = `Rencontres terminées`;
+    encounterDisplayEl.textContent = `Étage ${floor} (Exploration)`;
   } else {
-    encounterDisplayEl.textContent = `Rencontre ${encounter} / ${maxEncounters}`;
+    encounterDisplayEl.textContent = `Rencontre ${encounter}`;
   }
 }
 
 function updateShopUI(shopItems) {
     shopAreaEl.innerHTML = '';
-    if (!shopItems) return; // Sécurité supplémentaire
+    if (!shopItems) return;
     shopItems.forEach((item, index) => {
         const itemCard = document.createElement('div');
         itemCard.className = `shop-item-card rarity-${item.rarity}`;
@@ -144,19 +154,24 @@ function updateShopUI(shopItems) {
     });
 }
 
+function updateShopControlsUI(gold, shopRefreshCost) {
+    shopControlsEl.innerHTML = `
+        <button class="refresh-shop-btn" id="refresh-shop-btn">
+            Nettoyer la boutique
+        </button>
+    `;
+}
+
 function updateLootUI(droppedItems) {
-    // CORRECTION : On ajoute une garde pour s'assurer que droppedItems existe
-    if (!droppedItems) {
-        lootAreaEl.innerHTML = '';
+    if (!lootAreaEl || !droppedItems) {
+        if(lootAreaEl) lootAreaEl.innerHTML = '';
         return;
     }
-
     lootAreaEl.innerHTML = '';
     droppedItems.forEach((item, index) => {
         const itemCard = document.createElement('div');
         itemCard.className = `shop-item-card rarity-${item.rarity} loot-item-card`;
         itemCard.dataset.lootIndex = index;
-
         let affixesHtml = '';
         for (const [stat, value] of Object.entries(item.affixes)) {
             const affixInfo = AFFIX_DEFINITIONS[stat];
@@ -166,7 +181,6 @@ function updateLootUI(droppedItems) {
         }
         const primaryStatValue = item.stats[item.baseDefinition.stat];
         const primaryStatName = item.baseDefinition.stat;
-
         itemCard.innerHTML = `
             <div class="shop-item-info">
                 <p class="item-name">${item.name}</p>
@@ -179,19 +193,7 @@ function updateLootUI(droppedItems) {
     });
 }
 
-
-// --- FONCTIONS EXPORTÉES ---
-export function updateUI(state) {
-  updateMonsterUI(state.activeMonster);
-  updateHeroesUI(state.heroes);
-  updateGoldUI(state.gold);
-  updateGameStatusMessage(state.gameStatus);
-  updateDungeonUI(state.dungeonFloor, state.encounterIndex, state.encountersPerFloor, state.gameStatus);
-  updateShopUI(state.shopItems);
-  updateLootUI(state.droppedItems);
-}
-
-export function renderRecruitmentArea(heroDefinitions) {
+function renderRecruitmentArea(heroDefinitions) {
   recruitmentAreaEl.innerHTML = '';
   for (const key in heroDefinitions) {
     const heroDef = heroDefinitions[key];
@@ -204,7 +206,7 @@ export function renderRecruitmentArea(heroDefinitions) {
   }
 }
 
-export function renderProgressionControls(gameStatus) {
+function renderProgressionControls(gameStatus) {
   progressionControlsEl.innerHTML = '';
   if (gameStatus === 'farming_boss_available') {
     const bossButton = document.createElement('button');
@@ -218,3 +220,45 @@ export function renderProgressionControls(gameStatus) {
     progressionControlsEl.appendChild(nextFloorButton);
   }
 }
+
+function showSavingIndicator() {
+    saveIndicatorEl.classList.remove('hidden', 'saved');
+    saveIndicatorEl.classList.add('saving');
+    saveIndicatorEl.querySelector('.icon').textContent = '⚙️';
+    saveIndicatorEl.querySelector('.text').textContent = 'Sauvegarde...';
+}
+
+function showSaveSuccess() {
+    saveIndicatorEl.classList.remove('saving');
+    saveIndicatorEl.classList.add('saved');
+    saveIndicatorEl.querySelector('.icon').textContent = '✔️';
+    saveIndicatorEl.querySelector('.text').textContent = 'Sauvegardé !';
+}
+
+function hideSaveIndicator() {
+    saveIndicatorEl.classList.add('hidden');
+}
+
+// --- FONCTION PRINCIPALE EXPORTÉE ---
+function updateUI(state) {
+  updateMonsterUI(state.activeMonster);
+  updateHeroesUI(state.heroes, state.itemToEquip);
+  updateGoldUI(state.gold);
+  updateGameStatusMessage(state.gameStatus);
+  updateDungeonUI(state.dungeonFloor, state.encounterIndex, state.encountersPerFloor, state.gameStatus);
+  updateLootUI(state.droppedItems);
+  updateShopUI(state.shopItems);
+  updateShopControlsUI(state.gold, state.shopRefreshCost);
+  // CORRECTION : On appelle la fonction importée pour dessiner l'inventaire
+  renderInventory(state.inventory, state.itemToEquip);
+}
+
+// --- EXPORT NOMMÉS ---
+export {
+    updateUI,
+    renderRecruitmentArea,
+    renderProgressionControls,
+    showSavingIndicator,
+    showSaveSuccess,
+    hideSaveIndicator
+};

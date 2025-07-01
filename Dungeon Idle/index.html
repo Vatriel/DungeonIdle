@@ -6,7 +6,17 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div id="game-utility-controls">
+        <button id="reset-game-btn" title="Efface la sauvegarde et recommence">Réinitialiser</button>
+    </div>
+
     <h1>Clickpocalypse Clone</h1>
+    
+    <div id="save-indicator" class="hidden">
+        <span class="icon"></span>
+        <span class="text"></span>
+    </div>
+
     <div id="dungeon-info">
         <span id="floor-display"></span> | <span id="encounter-display"></span>
     </div>
@@ -34,12 +44,21 @@
             </div>
         </div>
 
-        <!-- NOUVEAU PANNEAU DE DROITE : LE MARCHAND -->
+        <!-- PANNEAU DE DROITE : LE MARCHAND -->
         <div id="shop-panel" class="panel">
             <h2>Marchand</h2>
+            <!-- NOUVELLE ZONE POUR LES CONTRÔLES DE LA BOUTIQUE -->
+            <div id="shop-controls"></div>
             <div id="shop-area">
                 <!-- Les objets en vente apparaîtront ici -->
             </div>
+        </div>
+    </div>
+
+    <div id="inventory-panel" class="panel">
+        <h2>Inventaire</h2>
+        <div id="inventory-grid">
+            <!-- Les objets de l'inventaire apparaîtront ici -->
         </div>
     </div>
 

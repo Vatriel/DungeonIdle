@@ -3,12 +3,13 @@
 import { HERO_DEFINITIONS } from '../data/heroData.js';
 import { MONSTER_DEFINITIONS } from '../data/monsterData.js';
 import { BOSS_NAMES, BOSS_TITLES } from '../data/bossData.js';
+import { ITEM_DEFINITIONS } from '../data/itemData.js';
 import { Hero } from '../entities/Hero.js';
 import { MonsterGroup } from '../entities/MonsterGroup.js';
 import { Boss } from '../entities/Boss.js';
-import { updateUI, renderRecruitmentArea, renderProgressionControls } from '../ui/UIUpdater.js';
-import { StorageManager } from '../managers/StorageManager.js';
-import { ShopManager } from '../managers/ShopManager.js';
+import { Item } from '../entities/Item.js';
+import { updateUI, renderRecruitmentArea, renderProgressionControls, showSavingIndicator, showSaveSuccess, hideSaveIndicator } from '../ui/UIUpdater.js';
+import { InventoryManager } from '../managers/InventoryManager.js';
 
 // --- CONSTANTES DE GAMEPLAY ---
 const PLAYER_CLICK_DAMAGE = 2;
@@ -20,8 +21,11 @@ const BASE_BOSS_HP = 200;
 const BASE_BOSS_DPS = 15;
 const ARMOR_CONSTANT = 200;
 const AUTOSAVE_INTERVAL = 5;
-const BASE_SHOP_REFRESH_COST = 50;
+const SHOP_RESTOCK_INTERVAL = 10;
+const MAX_SHOP_ITEMS = 8;
 const BASE_DROP_CHANCE = 0.15;
+const MAX_DROPPED_ITEMS = 6;
+const MAX_INVENTORY_SIZE = 24;
 
 // --- ÉTAT CENTRAL DU JEU ---
 let state = {
@@ -35,9 +39,10 @@ let state = {
   shopItems: [],
   shopRestockTimer: 0,
   autosaveTimer: 0,
-  shopRefreshCost: BASE_SHOP_REFRESH_COST,
   heroDefinitions: {},
-  droppedItems: []
+  droppedItems: [],
+  inventory: [],
+  itemToEquip: null
 };
 let lastTime = 0;
 
@@ -64,16 +69,18 @@ function updateGameLogic(dt) {
       break;
   }
   
-  ShopManager.update(state, dt);
+  state.shopRestockTimer += dt;
+  if (state.shopRestockTimer >= SHOP_RESTOCK_INTERVAL) {
+    state.shopRestockTimer = 0;
+    restockShop();
+  }
 
   state.autosaveTimer += dt;
   if (state.autosaveTimer >= AUTOSAVE_INTERVAL) {
     state.autosaveTimer = 0;
-    StorageManager.save(state);
+    triggerSave();
   }
   
-  state.shopRefreshCost = BASE_SHOP_REFRESH_COST * state.dungeonFloor;
-
   const warriorDef = state.heroDefinitions.WARRIOR;
   if (warriorDef && state.gold >= warriorDef.cost && warriorDef.status === 'locked') {
     warriorDef.status = 'available';
@@ -152,14 +159,15 @@ function runPartyWipeRecoveryLogic(dt) {
 // --- GESTIONNAIRES ---
 function handleMonsterDefeated() {
   if (!state.activeMonster) return;
-  if (Math.random() < BASE_DROP_CHANCE) {
-    console.log("Loot !");
-    generateLoot();
-  }
   const goldGained = (state.activeMonster.maxHp || state.activeMonster.totalMaxHp) * 0.1;
   const xpGained = (state.activeMonster.maxHp || state.activeMonster.totalMaxHp) * 0.5;
   state.gold += goldGained;
   state.heroes.forEach(hero => { if (hero.isFighting()) hero.addXp(xpGained); });
+
+  if (Math.random() < BASE_DROP_CHANCE) {
+    generateLoot();
+  }
+
   if (state.gameStatus === 'boss_fight') {
     state.gameStatus = 'floor_cleared';
     renderProgressionControls(state.gameStatus);
@@ -177,36 +185,21 @@ function handleMonsterDefeated() {
 }
 
 function generateLoot() {
+    if (state.droppedItems.length >= MAX_DROPPED_ITEMS) {
+        state.droppedItems.shift();
+    }
     const itemLevel = state.activeMonster.level;
     const itemKeys = Object.keys(ITEM_DEFINITIONS);
     const randomKey = itemKeys[Math.floor(Math.random() * itemKeys.length)];
     const itemDef = ITEM_DEFINITIONS[randomKey];
-    
     const newItem = new Item(itemDef, itemLevel);
     state.droppedItems.push(newItem);
 }
 
 function pickupItem(itemIndex) {
-    const item = state.droppedItems[itemIndex];
+    const item = state.droppedItems.splice(itemIndex, 1)[0];
     if (!item) return;
-
-    console.log(`Objet ramassé : ${item.name}`);
-    
-    // On retire l'objet du sol
-    state.droppedItems.splice(itemIndex, 1);
-
-    // On essaie de l'équiper (logique identique à celle de la boutique)
-    let equipped = false;
-    for (const hero of state.heroes) {
-        if (hero.equipment[item.baseDefinition.slot] === null) {
-            hero.equipItem(item);
-            equipped = true;
-            break;
-        }
-    }
-    if (!equipped && state.heroes.length > 0) {
-        state.heroes[0].equipItem(item);
-    }
+    InventoryManager.addItem(state, item);
 }
 
 function generateNextEncounter() {
@@ -229,6 +222,55 @@ function generateNextEncounter() {
   const scaledDef = { ...chosenMonsterDef, level: currentFloor, baseHp: Math.ceil(chosenMonsterDef.baseHp * scale), baseDps: parseFloat((chosenMonsterDef.baseDps * scale).toFixed(2)) };
   monsterCount = Math.max(1, monsterCount);
   state.activeMonster = new MonsterGroup(scaledDef, monsterCount);
+}
+
+function restockShop(force = false) {
+  if (!force && state.shopItems.length >= MAX_SHOP_ITEMS) return;
+  const itemKeys = Object.keys(ITEM_DEFINITIONS);
+  const randomKey = itemKeys[Math.floor(Math.random() * itemKeys.length)];
+  const itemDef = ITEM_DEFINITIONS[randomKey];
+  const itemLevel = state.dungeonFloor;
+  const newItem = new Item(itemDef, itemLevel);
+  state.shopItems.push(newItem);
+}
+
+function clearShop() {
+    console.log("Boutique nettoyée.");
+    state.shopItems = [];
+}
+
+function buyItem(itemIndex) {
+  const item = state.shopItems[itemIndex];
+  if (!item || state.gold < item.cost) return;
+  
+  if (!InventoryManager.addItem(state, item)) {
+      console.log("Achat annulé, inventaire plein.");
+      return;
+  }
+  
+  state.gold -= item.cost;
+  state.shopItems.splice(itemIndex, 1);
+}
+
+function selectItemToEquip(itemIndex) {
+    if(state.inventory[itemIndex]) {
+        if (state.itemToEquip && state.itemToEquip.inventoryIndex === itemIndex) {
+            cancelEquip();
+        } else {
+            state.itemToEquip = { ...state.inventory[itemIndex], inventoryIndex: itemIndex };
+        }
+    }
+}
+
+function cancelEquip() {
+    state.itemToEquip = null;
+}
+
+function equipSelectedItem(hero) {
+    if (!state.itemToEquip || !hero) return;
+    
+    InventoryManager.equipItem(state, hero, state.itemToEquip.inventoryIndex);
+    cancelEquip();
 }
 
 function generateBossName() {
@@ -267,6 +309,14 @@ function advanceToNextFloor() {
   generateNextEncounter();
 }
 
+async function triggerSave() {
+    showSavingIndicator();
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    saveGame();
+    showSaveSuccess();
+    setTimeout(hideSaveIndicator, 2000);
+}
+
 function onPlayerClick() {
   if (state.activeMonster && state.activeMonster.isAlive()) {
     state.activeMonster.takeDamage(PLAYER_CLICK_DAMAGE);
@@ -295,14 +345,75 @@ function moveHero(heroId, direction) {
   }
 }
 
+function saveGame() {
+  try {
+    const stateToSave = { ...state, shopItems: [], droppedItems: [], itemToEquip: null };
+    localStorage.setItem('clickpocalypseCloneSave', JSON.stringify(stateToSave));
+  } catch (e) {
+    console.error("Erreur lors de la sauvegarde :", e);
+  }
+}
+
+function loadGame() {
+  const savedStateJSON = localStorage.getItem('clickpocalypseCloneSave');
+  if (!savedStateJSON) return null;
+  try {
+    const loadedData = JSON.parse(savedStateJSON);
+    return loadedData;
+  } catch (e) {
+    console.error("Erreur lors du chargement :", e);
+    return null;
+  }
+}
+
+function resetGame() {
+    console.log("Réinitialisation du jeu...");
+    localStorage.removeItem('clickpocalypseCloneSave');
+    location.reload();
+}
+
 // --- INITIALISATION ---
 export function initGame() {
-  const loadedState = StorageManager.load();
-  if (loadedState) {
-    state = loadedState;
+  const loadedData = loadGame();
+  if (loadedData) {
+    state = loadedData;
+    if (!state.heroDefinitions || Object.keys(state.heroDefinitions).length === 0) {
+        state.heroDefinitions = JSON.parse(JSON.stringify(HERO_DEFINITIONS));
+    }
+    if (!state.droppedItems) state.droppedItems = [];
+    if (!state.inventory) state.inventory = [];
+    
     state.autosaveTimer = 0;
     state.shopRestockTimer = 0;
-    state.shopItems = [];
+    state.shopItems = []; 
+    state.itemToEquip = null;
+
+    state.heroes = loadedData.heroes.map(heroData => {
+        const heroDef = state.heroDefinitions[heroData.id.toUpperCase()];
+        const hero = new Hero(heroDef);
+        Object.assign(hero, heroData);
+        for (const slot in hero.equipment) {
+            const itemData = hero.equipment[slot];
+            if (itemData) {
+                const item = new Item(itemData.baseDefinition, itemData.level);
+                Object.assign(item, itemData);
+                hero.equipment[slot] = item;
+            }
+        }
+        return hero;
+    });
+    
+    if(state.activeMonster) {
+        if(state.activeMonster.initialCount !== undefined) {
+            const monster = new MonsterGroup(state.activeMonster.baseDefinition, state.activeMonster.initialCount);
+            Object.assign(monster, state.activeMonster);
+            state.activeMonster = monster;
+        } else {
+            const boss = new Boss(state.activeMonster.name, state.activeMonster.maxHp, state.activeMonster.dps, state.activeMonster.level);
+            Object.assign(boss, state.activeMonster);
+            state.activeMonster = boss;
+        }
+    }
   } else {
     state.heroDefinitions = JSON.parse(JSON.stringify(HERO_DEFINITIONS));
     for (const key in state.heroDefinitions) {
@@ -314,7 +425,16 @@ export function initGame() {
   }
   
   const enemyPanel = document.getElementById('enemy-panel');
-  enemyPanel.addEventListener('click', onPlayerClick);
+  enemyPanel.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    const lootItem = event.target.closest('.loot-item-card');
+    if (lootItem) {
+        const itemIndex = parseInt(lootItem.dataset.lootIndex, 10);
+        pickupItem(itemIndex);
+        return;
+    }
+    onPlayerClick();
+  });
   
   const shopArea = document.getElementById('shop-area');
   shopArea.addEventListener('mousedown', (event) => {
@@ -322,8 +442,16 @@ export function initGame() {
     const button = event.target.closest('.buy-btn');
     if (button) {
       const itemIndex = parseInt(button.dataset.itemIndex, 10);
-      ShopManager.buyItem(state, itemIndex);
+      buyItem(itemIndex);
     }
+  });
+
+  const shopControls = document.getElementById('shop-controls');
+  shopControls.addEventListener('mousedown', (event) => {
+      if (event.target.id === 'refresh-shop-btn') {
+          event.preventDefault();
+          clearShop();
+      }
   });
 
   const recruitmentArea = document.getElementById('recruitment-area');
@@ -341,12 +469,37 @@ export function initGame() {
   const heroesArea = document.getElementById('heroes-area');
   heroesArea.addEventListener('mousedown', (event) => {
     event.preventDefault(); 
+    if (state.itemToEquip) {
+        const heroCard = event.target.closest('.hero-card');
+        if (heroCard) {
+            const hero = state.heroes.find(h => h.id === heroCard.dataset.heroId);
+            if (hero) equipSelectedItem(hero);
+        } else {
+            cancelEquip();
+        }
+        return;
+    }
     const button = event.target.closest('.move-hero-btn');
     if (button) {
       const { heroId, direction } = button.dataset;
       moveHero(heroId, direction);
     }
   });
+  
+  const inventoryGrid = document.getElementById('inventory-grid');
+  inventoryGrid.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      const itemCard = event.target.closest('.inventory-item');
+      if (itemCard) {
+          const itemIndex = parseInt(itemCard.dataset.inventoryIndex, 10);
+          selectItemToEquip(itemIndex);
+      }
+  });
+
+  const resetButton = document.getElementById('reset-game-btn');
+  if(resetButton) {
+      resetButton.addEventListener('click', resetGame);
+  }
 
   renderRecruitmentArea(state.heroDefinitions);
   renderProgressionControls(state.gameStatus);

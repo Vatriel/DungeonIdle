@@ -213,3 +213,190 @@ progress {
     font-weight: bold;
     color: #ffd700;
 }
+
+#save-indicator {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    background-color: #282c34;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #61dafb;
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1000; /* Pour être sûr qu'il est au-dessus de tout */
+}
+
+#save-indicator.hidden {
+    opacity: 0;
+    pointer-events: none; /* L'élément n'est pas cliquable quand il est caché */
+}
+
+#save-indicator .icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+/* L'animation de rotation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* On applique l'animation à l'icône quand la classe .saving est active */
+#save-indicator.saving .icon {
+    animation: spin 0.5s linear infinite;
+}
+
+#game-utility-controls {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    z-index: 2000;
+}
+
+#reset-game-btn {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #bd2130;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.2s;
+}
+
+#reset-game-btn:hover {
+    background-color: #c82333;
+}
+
+/* ... (tous vos styles existants) ... */
+
+#loot-area {
+    margin-top: 20px;
+}
+.loot-item-card {
+    cursor: pointer;
+    transition: transform 0.1s ease-in-out;
+}
+.loot-item-card:hover {
+    transform: scale(1.03);
+}
+.pickup-text {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+/* NOUVEAUX STYLES POUR LES CONTRÔLES DE LA BOUTIQUE */
+#shop-controls {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #555;
+}
+
+.refresh-shop-btn {
+    background-color: #6c757d;
+    color: white;
+    border: 1px solid #888;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+.refresh-shop-btn:hover:not(:disabled) {
+    background-color: #808890;
+}
+
+.refresh-shop-btn:disabled {
+    background-color: #444;
+    color: #888;
+    cursor: not-allowed;
+    border-color: #555;
+}
+
+#inventory-panel {
+    width: 90%; /* On prend presque toute la largeur */
+    margin: 20px auto; /* On centre le panneau */
+    min-height: 150px;
+}
+
+#inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+}
+
+.inventory-item {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: #4a505c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.inventory-item:hover {
+    transform: scale(1.1);
+}
+
+/* On utilise les mêmes couleurs de rareté que pour la boutique */
+.inventory-item.rarity-magic {
+    border-color: #8ab4f8;
+    color: #8ab4f8;
+}
+.inventory-item.rarity-rare {
+    border-color: #fdd663;
+    color: #fdd663;
+}
+
+.inventory-item.selected {
+    box-shadow: 0 0 10px 3px #ffd700;
+    transform: scale(1.1);
+}
+
+.hero-equipment {
+    font-size: 0.8em;
+    color: #ccc;
+    margin: 5px 0;
+}
+
+.equipped-item {
+    background: #333;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-bottom: 3px;
+}
+
+.equip-btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.equip-btn:hover {
+    background-color: #218838;
+}
+
