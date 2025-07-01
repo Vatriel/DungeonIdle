@@ -198,3 +198,18 @@ progress {
     font-style: italic;
     font-size: 0.85em;
 }
+
+#loot-area {
+    margin-top: 20px;
+}
+.loot-item-card {
+    cursor: pointer;
+    transition: transform 0.1s ease-in-out;
+}
+.loot-item-card:hover {
+    transform: scale(1.03);
+}
+.pickup-text {
+    font-weight: bold;
+    color: #ffd700;
+}
