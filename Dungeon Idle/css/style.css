@@ -1,0 +1,200 @@
+/* Style de base de la page */
+body {
+    background-color: #282c34;
+    color: white;
+    font-family: sans-serif;
+    text-align: center; /* Centre le h1 */
+}
+
+/* Le conteneur principal du jeu - C'est ici que la magie opère */
+#game-world {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
+/* Style commun pour les deux panneaux */
+.panel {
+    background-color: #3c4049;
+    border: 1px solid #61dafb;
+    border-radius: 8px;
+    padding: 15px;
+    width: 32%; /* Ajustement pour 3 colonnes */
+    min-height: 400px;
+}
+
+
+/* Style pour la barre de progression (vie du monstre) */
+progress {
+    width: 80%;
+    height: 25px;
+}
+
+/* Style pour une carte de héros individuelle (on l'utilisera à l'étape 3) */
+.hero-card {
+    border: 1px solid #ccc;
+    background-color: #4a505c;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+#enemy-panel {
+    cursor: pointer;
+}
+
+.hero-hp-bar {
+    width: 100%;
+    height: 10px;
+}
+
+/* Style pour griser un héros mort */
+.hero-card.dead {
+    opacity: 0.5;
+    background-color: #333;
+}
+
+.hero-stats {
+    font-size: 0.9em;
+    margin: 4px 0; /* Réduit l'espacement vertical */
+    color: #ddd;
+}
+
+.hero-card.recovering {
+    opacity: 0.5;
+    background-color: #333;
+}
+#game-status-message {
+    color: #ffc107; /* Jaune/orange pour l'alerte */
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 1.5em; /* Pour éviter que la page ne "saute" */
+}
+
+.hero-xp-bar {
+    width: 100%;
+    height: 5px;
+}
+/* Changer la couleur de la barre d'XP pour la différencier */
+.hero-xp-bar::-webkit-progress-value { background-color: #ffd700; } /* Chrome, Safari */
+.hero-xp-bar::-moz-progress-bar { background-color: #ffd700; } /* Firefox */
+
+.xp-text {
+    font-size: 0.8em;
+    color: #ccc;
+    margin-bottom: 2px;
+}
+
+/* Utiliser Flexbox pour aligner le nom et le niveau du héros */
+.hero-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.hero-card {
+    display: flex; /* Permet d'aligner le contenu et les contrôles */
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hero-main-content {
+    flex-grow: 1; /* Le contenu principal prend toute la place disponible */
+}
+
+.hero-controls {
+    display: flex;
+    flex-direction: column; /* Place les boutons l'un sur l'autre */
+    margin-left: 10px;
+}
+
+.move-hero-btn {
+    background-color: #555;
+    border: 1px solid #777;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 2px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+}
+
+.move-hero-btn:hover {
+    background-color: #777;
+}
+
+.move-placeholder { height: 28px; }
+
+.shop-item-card {
+    background-color: #4a505c;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shop-item-info p {
+    margin: 2px 0;
+    font-size: 0.9em;
+}
+
+.shop-item-info .item-name {
+    font-weight: bold;
+}
+
+.shop-item-info .item-stats {
+    color: #a7d3a7; /* Vert pour les stats positives */
+}
+
+.buy-btn {
+    background-color: #ffd700;
+    color: #282c34;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.buy-btn:hover {
+    background-color: #ffec80;
+}
+
+.hero-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Deux colonnes de taille égale */
+    gap: 0 10px; /* Espace entre les colonnes */
+}
+
+.shop-item-card.rarity-common {
+    border-color: #ccc; /* Gris/Blanc */
+}
+.shop-item-card.rarity-magic {
+    border-color: #61dafb; /* Bleu */
+}
+.shop-item-card.rarity-rare {
+    border-color: #ffd700; /* Jaune */
+}
+
+.item-name {
+    font-weight: bold;
+}
+
+/* On colore aussi le nom de l'objet pour plus de clarté */
+.rarity-magic .item-name {
+    color: #8ab4f8; /* Un bleu plus lisible */
+}
+.rarity-rare .item-name {
+    color: #fdd663; /* Un jaune plus lisible */
+}
+
+.item-affix {
+    color: #b0c4de;
+    font-style: italic;
+    font-size: 0.85em;
+}
