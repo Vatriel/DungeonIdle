@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Dungeon Descent</title>
+    <!-- NOUVEAU : Ajout des polices depuis Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -21,6 +25,7 @@
         <span id="floor-display"></span> | <span id="encounter-display"></span>
     </div>
     <div id="progression-controls"></div>
+    <div id="auto-progression-controls"></div>
     <div id="game-status-message"></div>
 
     <div id="game-world">
@@ -30,8 +35,10 @@
             <hr>
             <div id="heroes-area"></div>
             <hr>
-            <h3>Recrutement</h3>
-            <div id="recruitment-area"></div>
+            <div id="recruitment-section" class="hidden">
+                <h3>Recrutement</h3>
+                <div id="recruitment-area"></div>
+            </div>
         </div>
 
         <div id="enemy-panel" class="panel">
@@ -43,7 +50,10 @@
         </div>
 
         <div id="shop-panel" class="panel">
-            <button class="refresh-shop-btn" id="refresh-shop-btn" title="Rafraîchir la boutique">🔄</button>
+            <div class="shop-header-controls">
+                <button id="toggle-lock-mode-btn" class="shop-utility-btn" title="Activer/Désactiver le mode verrouillage">🔒</button>
+                <button class="refresh-shop-btn" id="refresh-shop-btn" title="Rafraîchir la boutique">🔄</button>
+            </div>
             
             <h2>Marchand</h2>
             <div id="shop-area">
@@ -56,6 +66,9 @@
         <div id="inventory-grid">
             </div>
     </div>
+
+    <!-- NOUVEAU : Conteneur pour les textes flottants -->
+    <div id="floating-text-container"></div>
 
     <script type="module" src="js/main.js"></script>
 </body>

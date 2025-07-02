@@ -1,10 +1,21 @@
 /* --- STYLES GÉNÉRAUX & MISE EN PAGE --- */
 body {
-    background-color: #282c34;
-    color: white;
-    font-family: sans-serif;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    font-family: 'Roboto Mono', monospace;
     text-align: center;
 }
+
+h1, h2, h3 {
+    font-family: 'Press Start 2P', cursive;
+    color: #61dafb;
+    text-shadow: 0 0 5px rgba(97, 218, 251, 0.5);
+}
+h1 { font-size: 2em; }
+h2 { font-size: 1.2em; }
+h3 { font-size: 1em; margin-top: 20px;}
+
+.hidden { display: none; }
 
 #game-world {
     display: flex;
@@ -12,50 +23,58 @@ body {
     align-items: flex-start;
     margin-top: 20px;
 }
-
 #game-status-message {
     font-size: 1.2em;
     font-weight: bold;
     color: #ffc107;
     min-height: 1.5em;
 }
+#auto-progression-controls {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    min-height: 24px;
+}
+.auto-control-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
 
 /* --- PANNEAUX & CONTENEURS --- */
 .panel {
-    background-color: #3c4049;
-    border: 1px solid #61dafb;
-    border-radius: 8px;
+    background-color: #2a2a2a;
+    border: 4px solid #555;
+    border-top-color: #777;
+    border-left-color: #777;
     padding: 15px;
     width: 32%;
     min-height: 400px;
     position: relative;
 }
-
-#inventory-panel {
-    width: 90%;
-    margin: 20px auto;
-    min-height: 150px;
-}
-
+#shop-panel.lock-mode-active #shop-area .shop-item-card { cursor: pointer; }
+#inventory-panel { width: 90%; margin: 20px auto; min-height: 150px; }
 #loot-area { margin-top: 20px; }
 #enemy-panel { cursor: pointer; }
 
 /* --- CARTES (Héros, Boutique, Butin) --- */
 .hero-card, .shop-item-card, .loot-item-card {
-    background-color: #4a505c;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    background-color: #333;
+    border: 2px solid #444;
+    border-top-color: #666;
+    border-left-color: #666;
     padding: 10px;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.2s ease-in-out;
 }
-
-.loot-item-card {
-    cursor: default;
-    transition: transform 0.1s ease-in-out;
-}
+.shop-item-card.locked { border-color: #ffd700; box-shadow: 0 0 8px #ffd700; }
+.loot-item-card { cursor: default; transition: transform 0.1s ease-in-out; }
 .loot-item-card:hover { transform: scale(1.03); }
 
 /* --- HÉROS --- */
@@ -63,6 +82,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    position: relative;
+    padding-right: 35px; /* MODIFIÉ : Augmentation de l'espacement */
 }
 .hero-main-content { flex-grow: 1; }
 .hero-stats { font-size: 0.9em; margin: 4px 0; color: #ddd; }
@@ -70,168 +91,117 @@ body {
 .hero-controls { display: flex; flex-direction: column; margin-left: 10px; }
 .move-placeholder { height: 28px; }
 
-.hero-card.dead, .hero-card.recovering {
-    opacity: 0.5;
-    background-color: #333;
-}
+.hero-card.dead, .hero-card.recovering { opacity: 0.5; background-color: #333; }
+.hero-card .collapsed-info { display: none; }
+.hero-card.collapsed .hero-stats-grid,
+.hero-card.collapsed .hero-xp-bar,
+.hero-card.collapsed .xp-text,
+.hero-card.collapsed .hero-equipment-display { display: none; }
+.hero-card.collapsed .collapsed-info { display: block; margin-top: 5px; }
+.hero-card.collapsed .hero-main-content { flex-grow: 0; width: 100%; }
+.hero-card.collapsed .hero-title { margin-bottom: 5px; }
+.hero-card.collapsed { align-items: flex-start; padding-top: 5px; padding-bottom: 5px; }
+.hero-card.collapsed .hero-controls { flex-direction: row; align-items: center; margin-left: auto; }
+.hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; }
 
-/* Barres de vie et d'XP */
-progress { width: 80%; height: 25px; }
+progress { width: 80%; height: 15px; border: 1px solid #111; background-color: #444; }
+progress::-webkit-progress-bar { background-color: #444; }
+progress::-webkit-progress-value { background-color: #e53935; }
+progress::-moz-progress-bar { background-color: #e53935; }
 .hero-hp-bar { width: 100%; height: 10px; }
 .hero-xp-bar { width: 100%; height: 5px; }
 .hero-xp-bar::-webkit-progress-value { background-color: #ffd700; }
 .hero-xp-bar::-moz-progress-bar { background-color: #ffd700; }
 .xp-text { font-size: 0.8em; color: #ccc; margin-bottom: 2px; }
 
-/* Équipement du héros */
-.hero-equipment-display { font-size: 0.85em; margin-top: 5px; }
-.hero-equipment { font-size: 0.8em; color: #ccc; margin: 5px 0; }
-.equipped-item {
-    background: #333;
-    padding: 3px 6px;
-    border-radius: 3px;
-    margin-bottom: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.hero-equipment-display { font-size: 0.85em; margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+.equipped-item { background: #222; padding: 3px 6px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* --- OBJETS & RARETÉ --- */
 .item-info { flex-grow: 1; text-align: left; }
 .item-info p, .shop-item-info p { margin: 2px 0; font-size: 0.9em; }
 .shop-item-info { text-align: left; }
-
 .item-name { font-weight: bold; }
 .item-stats { color: #a7d3a7; }
 .item-affix { color: #b0c4de; font-style: italic; font-size: 0.85em; }
 .pickup-text { font-weight: bold; color: #ffd700; }
-
-.rarity-common { border-color: #ccc; }
+.rarity-common { border-color: #666; }
 .rarity-magic { border-color: #61dafb; }
 .rarity-rare { border-color: #ffd700; }
-
 .rarity-magic .item-name { color: #8ab4f8; }
 .rarity-rare .item-name { color: #fdd663; }
-
-/* Comparaison de stats */
-.stat-increase { color: #4CAF50; } /* Vert */
-.stat-decrease { color: #F44336; } /* Rouge */
-
+.stat-increase { color: #4CAF50; }
+.stat-decrease { color: #F44336; }
 
 /* --- INVENTAIRE --- */
-#inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
-}
+#inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
 .inventory-item-container { position: relative; }
-.inventory-item {
-    width: 100%;
-    height: 60px;
-    border: 2px solid #ccc;
-    border-radius: 4px;
-    background-color: #4a505c;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
+.inventory-item { width: 100%; height: 60px; border: 2px solid #666; background-color: #333; display: flex; justify-content: center; align-items: center; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
 .inventory-item:hover { transform: scale(1.1); }
 .inventory-item.rarity-magic { border-color: #8ab4f8; color: #8ab4f8; }
 .inventory-item.rarity-rare { border-color: #fdd663; color: #fdd663; }
 .inventory-item.selected { box-shadow: 0 0 10px 3px #ffd700; transform: scale(1.1); }
 
-
 /* --- BOUTONS --- */
+.shop-header-controls { position: absolute; top: 10px; right: 15px; display: flex; gap: 10px; align-items: center; }
 .item-actions { display: flex; flex-direction: column; align-items: flex-end; margin-left: 10px; }
-.item-action-btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; margin-top: 4px; }
+button { font-family: 'Press Start 2P', cursive; font-size: 0.7em; border: 2px solid #444; border-top-color: #666; border-left-color: #666; background-color: #333; color: #e0e0e0; padding: 8px 12px; cursor: pointer; }
+button:hover { background-color: #444; }
+button:active { border-top-color: #444; border-left-color: #444; border-bottom-color: #666; border-right-color: #666; }
+.item-action-btn { padding: 8px 12px; }
 
-.move-hero-btn { background-color: #555; border: 1px solid #777; color: white; cursor: pointer; font-size: 1.2em; padding: 2px 8px; margin: 2px 0; border-radius: 4px; }
-.move-hero-btn:hover { background-color: #777; }
+.move-hero-btn { font-size: 1.2em; padding: 2px 8px; margin: 2px 0; }
+.hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; } /* MODIFIÉ */
 
-.buy-btn { background-color: #ffd700; color: #282c34; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.toggle-view-btn { position: absolute; top: 0; right: 0; font-size: 1em; padding: 0 5px; } /* MODIFIÉ */
+
+.buy-btn { background-color: #ffd700; color: #1a1a1a; }
 .buy-btn:hover { background-color: #ffec80; }
-
 .pickup-btn { background-color: #28a745; color: white; }
 .pickup-btn:hover { background-color: #218838; }
-
-.discard-btn { background-color: #dc3545; color: white; padding: 4px 8px; font-size: 0.8em; }
+.discard-btn { background-color: #dc3545; color: white; }
 .discard-btn:hover { background-color: #c82333; }
-
-.inventory-discard-btn { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 20px; text-align: center; }
-
-.unequip-btn { background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; padding: 2px 5px; margin-left: 8px; }
-.unequip-btn:hover { background-color: #5a6268; }
-
-.equip-btn { width: 100%; padding: 8px; margin-top: 5px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-.equip-btn:hover { background-color: #218838; }
-
-#reset-game-btn { background-color: #dc3545; color: white; border: 1px solid #bd2130; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background-color 0.2s; }
+.inventory-discard-btn { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 1; text-align: center; padding: 0; }
+.unequip-btn { padding: 2px 5px; margin-left: 8px; }
+#reset-game-btn { background-color: #dc3545; color: white; box-shadow: none; }
 #reset-game-btn:hover { background-color: #c82333; }
 
-.refresh-shop-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; color: #D4AF37; font-size: 1.8em; cursor: pointer; padding: 5px; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); transition: transform 0.3s ease-in-out, text-shadow 0.2s; }
-.refresh-shop-btn:hover:not(:disabled) { transform: rotate(180deg); background-color: #808890; }
-.refresh-shop-btn:disabled { background-color: #444; color: #888; border-color: #555; cursor: not-allowed; text-shadow: none; }
+.refresh-shop-btn { border: none; background: none; color: #D4AF37; font-size: 1.8em; padding: 0; line-height: 1; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); transition: transform 0.3s ease-in-out, text-shadow 0.2s; }
+.refresh-shop-btn:hover:not(:disabled) { transform: rotate(180deg); }
+.refresh-shop-btn:disabled { color: #888; cursor: not-allowed; text-shadow: none; }
 
+.shop-utility-btn {
+    border: none;
+    background: none;
+    color: #aaa;
+    font-size: 1.8em; /* MODIFIÉ */
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+.shop-utility-btn:hover { background: none; color: #ccc; }
+.shop-utility-btn.active { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); } /* MODIFIÉ */
 
 /* --- ÉLÉMENTS D'INTERFACE (UI flottante) --- */
-#game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; }
+#floating-text-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5000; }
+.floating-text { position: absolute; font-family: 'Press Start 2P', cursive; font-size: 1.2em; font-weight: bold; text-shadow: 2px 2px #000; animation: floatUp 1.5s ease-out forwards; transition: transform 0.1s ease-out; }
+.floating-text.damage { color: #ff4d4d; }
+.floating-text.crit { color: #ffc107; font-size: 1.5em; }
+.floating-text.heal { color: #4CAF50; }
+.floating-text.pop { animation: pop 0.2s ease-out; } /* NOUVEAU */
 
-#save-indicator {
-    position: fixed; top: 15px; right: 20px;
-    background-color: #282c34; color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    border: 1px solid #61dafb;
-    display: flex;
-    align-items: center;
-    font-size: 1em;
-    opacity: 1;
-    transition: opacity 0.5s ease-in-out;
-    z-index: 1000;
-}
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } } /* NOUVEAU */
+
+#game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; }
+#save-indicator { position: fixed; top: 15px; right: 20px; background-color: #282c34; color: white; padding: 8px 15px; border-radius: 5px; border: 1px solid #61dafb; display: flex; align-items: center; font-size: 1em; opacity: 1; transition: opacity 0.5s ease-in-out; z-index: 1000; }
 #save-indicator.hidden { opacity: 0; pointer-events: none; }
 #save-indicator .icon { margin-right: 10px; font-size: 1.2em; }
 #save-indicator.saving .icon { animation: spin 0.5s linear infinite; }
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* NOUVEAU : Style pour les notifications */
-#notification-area {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 3000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-.notification {
-    padding: 10px 20px;
-    border-radius: 5px;
-    color: white;
-    font-weight: bold;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s, transform 0.5s;
-}
-.notification.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-.notification.error {
-    background-color: #c82333;
-    border: 1px solid #dc3545;
-}
-.notification.success {
-    background-color: #218838;
-    border: 1px solid #28a745;
-}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+#notification-area { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.notification { padding: 10px 20px; border-radius: 5px; color: white; font-weight: bold; opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+.notification.show { opacity: 1; transform: translateY(0); }
+.notification.error { background-color: #c82333; border: 1px solid #dc3545; }
+.notification.success { background-color: #218838; border: 1px solid #28a745; }

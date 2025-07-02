@@ -7,7 +7,6 @@ import { StorageManager } from '../managers/StorageManager.js';
 import { ShopManager } from '../managers/ShopManager.js';
 import { InventoryManager } from '../managers/InventoryManager.js';
 import { DungeonManager } from '../managers/DungeonManager.js';
-// MODIFIÉ : On importe uniquement la fonction principale de mise à jour de l'UI
 import { updateUI, showSavingIndicator, showSaveSuccess, hideSaveIndicator } from '../ui/UIUpdater.js';
 
 // --- CONSTANTES DE GAMEPLAY ---
@@ -22,34 +21,25 @@ let lastTime = 0;
 function gameLoop(currentTime) {
   if (lastTime === 0) lastTime = currentTime;
   const deltaTime = (currentTime - lastTime) / 1000;
-  
   updateGameLogic(deltaTime);
-  
-  // MODIFIÉ : La boucle de jeu appelle la fonction de mise à jour principale.
-  // C'est updateUI qui gérera les rafraîchissements conditionnels.
-  updateUI(state);
-  
+  updateUI(state, deltaTime);
   lastTime = currentTime;
   requestAnimationFrame(gameLoop);
 }
 
 function updateGameLogic(dt) {
-  // Les managers mettent à jour la logique et lèvent les drapeaux si nécessaire.
   ShopManager.update(state, dt);
   DungeonManager.update(state, dt);
 
-  // Logique d'autosave
   state.autosaveTimer += dt;
   if (state.autosaveTimer >= AUTOSAVE_INTERVAL) {
     state.autosaveTimer = 0;
     triggerSave();
   }
   
-  // Déblocage du guerrier
   const warriorDef = state.heroDefinitions.WARRIOR;
   if (warriorDef && state.gold >= warriorDef.cost && warriorDef.status === 'locked') {
     warriorDef.status = 'available';
-    // NOUVEAU : On lève un drapeau au lieu d'appeler directement une fonction d'UI
     state.ui.recruitmentNeedsUpdate = true;
   }
 }
@@ -66,6 +56,9 @@ async function triggerSave() {
 function onPlayerClick() {
   if (state.activeMonster && state.activeMonster.isAlive()) {
     state.activeMonster.takeDamage(PLAYER_CLICK_DAMAGE);
+    // MODIFIÉ : On ajoute les dégâts au "seau" correspondant
+    if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, timer: 0.3 };
+    state.damageBuckets.monster.damage += PLAYER_CLICK_DAMAGE;
   }
 }
 
@@ -74,8 +67,12 @@ function recruitHero(heroId) {
   if (heroDef && heroDef.status === 'available' && state.gold >= heroDef.cost) {
     state.gold -= heroDef.cost;
     heroDef.status = 'recruited';
-    state.heroes.push(new Hero(heroDef));
-    // NOUVEAU : On lève les drapeaux pour les parties de l'UI qui ont changé
+    const newHero = new Hero(heroDef);
+    state.heroes.push(newHero);
+    
+    if (!state.ui.heroCardState) state.ui.heroCardState = {};
+    state.ui.heroCardState[newHero.id] = { isCollapsed: false };
+
     state.ui.heroesNeedUpdate = true;
     state.ui.recruitmentNeedsUpdate = true;
   }
@@ -86,11 +83,18 @@ function moveHero(heroId, direction) {
   if (index === -1) return;
   if (direction === 'up' && index > 0) {
     [state.heroes[index], state.heroes[index - 1]] = [state.heroes[index - 1], state.heroes[index]];
-    state.ui.heroesNeedUpdate = true; // NOUVEAU
+    state.ui.heroesNeedUpdate = true;
   } else if (direction === 'down' && index < state.heroes.length - 1) {
     [state.heroes[index], state.heroes[index + 1]] = [state.heroes[index + 1], state.heroes[index]];
-    state.ui.heroesNeedUpdate = true; // NOUVEAU
+    state.ui.heroesNeedUpdate = true;
   }
+}
+
+function toggleHeroCardView(heroId) {
+    if (state.ui.heroCardState && state.ui.heroCardState[heroId]) {
+        state.ui.heroCardState[heroId].isCollapsed = !state.ui.heroCardState[heroId].isCollapsed;
+        state.ui.heroesNeedUpdate = true;
+    }
 }
 
 // --- INITIALISATION ---
@@ -111,21 +115,29 @@ function getNewGameState() {
         droppedItems: [],
         inventory: [],
         itemToEquip: null,
-        // NOUVEAU : Un objet pour les drapeaux de l'UI et une file pour les notifications
         ui: {
             shopNeedsUpdate: true,
             heroesNeedUpdate: true,
+            heroBarsNeedUpdate: true,
             inventoryNeedsUpdate: true,
             lootNeedsUpdate: true,
             recruitmentNeedsUpdate: true,
             progressionNeedsUpdate: true,
+            heroCardState: {},
+            shopLockModeActive: false,
+            autoProgressToBoss: false,
+            autoProgressToNextFloor: false,
         },
         notifications: [],
+        floatingTexts: [],
+        damageBuckets: {}, // NOUVEAU
     };
 
     for (const key in initialState.heroDefinitions) {
         if (initialState.heroDefinitions[key].status === 'recruited') {
-            initialState.heroes.push(new Hero(initialState.heroDefinitions[key]));
+            const newHero = new Hero(initialState.heroDefinitions[key]);
+            initialState.heroes.push(newHero);
+            initialState.ui.heroCardState[newHero.id] = { isCollapsed: false };
         }
     }
     DungeonManager.generateNextEncounter(initialState);
@@ -137,27 +149,62 @@ export function initGame() {
   const loadedState = StorageManager.load();
   if (loadedState) {
     state = loadedState;
-    // NOUVEAU : On s'assure que les nouvelles propriétés existent sur les anciennes sauvegardes
-    state.ui = state.ui || { shopNeedsUpdate: true, heroesNeedUpdate: true, inventoryNeedsUpdate: true, lootNeedsUpdate: true, recruitmentNeedsUpdate: true, progressionNeedsUpdate: true };
+    const heroCardState = state.ui?.heroCardState || {};
+    const shopLockModeActive = state.ui?.shopLockModeActive || false;
+    const autoProgressToBoss = state.ui?.autoProgressToBoss || false;
+    const autoProgressToNextFloor = state.ui?.autoProgressToNextFloor || false;
+    state.ui = {
+        shopNeedsUpdate: true,
+        heroesNeedUpdate: true,
+        heroBarsNeedUpdate: false,
+        inventoryNeedsUpdate: true,
+        lootNeedsUpdate: true,
+        recruitmentNeedsUpdate: true,
+        progressionNeedsUpdate: true,
+        heroCardState: heroCardState,
+        shopLockModeActive: shopLockModeActive,
+        autoProgressToBoss: autoProgressToBoss,
+        autoProgressToNextFloor: autoProgressToNextFloor,
+    };
     state.notifications = state.notifications || [];
+    state.floatingTexts = [];
+    state.damageBuckets = {}; // NOUVEAU
   } else {
     state = getNewGameState();
   }
   
   // --- SETUP DES ÉCOUTEURS D'ÉVÉNEMENTS ---
-  // (Le code des écouteurs d'événements reste identique)
   document.getElementById('refresh-shop-btn').addEventListener('click', () => {
       ShopManager.clearShop(state);
   });
+
+  document.getElementById('toggle-lock-mode-btn').addEventListener('click', (event) => {
+    state.ui.shopLockModeActive = !state.ui.shopLockModeActive;
+    event.currentTarget.classList.toggle('active', state.ui.shopLockModeActive);
+    document.getElementById('shop-panel').classList.toggle('lock-mode-active', state.ui.shopLockModeActive);
+  });
+
   document.getElementById('shop-area').addEventListener('click', (event) => {
+    if (state.ui.shopLockModeActive) {
+        const itemCard = event.target.closest('.shop-item-card');
+        if (itemCard) {
+            const itemIndex = parseInt(itemCard.querySelector('.buy-btn').dataset.itemIndex, 10);
+            const item = state.shopItems[itemIndex];
+            if (item) {
+                item.isLocked = !item.isLocked;
+                state.ui.shopNeedsUpdate = true;
+            }
+        }
+        return;
+    }
+
     const buyButton = event.target.closest('.buy-btn');
     if (buyButton) {
-      event.preventDefault();
       ShopManager.buyItem(state, parseInt(buyButton.dataset.itemIndex, 10));
     }
   });
-  document.getElementById('enemy-panel').addEventListener('mousedown', (event) => {
-    event.preventDefault();
+
+  document.getElementById('enemy-panel').addEventListener('click', (event) => {
     const target = event.target;
     if (target.matches('.pickup-btn')) {
         InventoryManager.pickupItem(state, parseInt(target.dataset.lootIndex, 10));
@@ -175,15 +222,32 @@ export function initGame() {
     if (event.target.id === 'fight-boss-btn') DungeonManager.startBossFight(state);
     else if (event.target.id === 'next-floor-btn') DungeonManager.advanceToNextFloor(state);
   });
-  document.getElementById('heroes-area').addEventListener('mousedown', (event) => {
+
+  document.getElementById('auto-progression-controls').addEventListener('change', (event) => {
+    if (event.target.id === 'auto-boss-checkbox') {
+        state.ui.autoProgressToBoss = event.target.checked;
+    } else if (event.target.id === 'auto-floor-checkbox') {
+        state.ui.autoProgressToNextFloor = event.target.checked;
+    }
+  });
+
+  document.getElementById('heroes-area').addEventListener('click', (event) => {
     event.preventDefault();
     const target = event.target;
+
+    const toggleButton = target.closest('.toggle-view-btn');
+    if (toggleButton) {
+        toggleHeroCardView(toggleButton.dataset.heroId);
+        return;
+    }
+
     if (target.matches('.unequip-btn')) {
         const { heroId, slot } = target.dataset;
         const hero = state.heroes.find(h => h.id === heroId);
         if (hero) InventoryManager.unequipItemFromHero(state, hero, slot);
         return;
     }
+
     if (state.itemToEquip) {
         const heroCard = target.closest('.hero-card');
         if (heroCard) {
@@ -200,7 +264,8 @@ export function initGame() {
         }
     }
   });
-  document.getElementById('inventory-grid').addEventListener('mousedown', (event) => {
+  
+  document.getElementById('inventory-grid').addEventListener('click', (event) => {
       event.preventDefault();
       const target = event.target;
       if (target.matches('.inventory-discard-btn')) {
@@ -212,8 +277,10 @@ export function initGame() {
           }
       }
   });
+
   document.getElementById('reset-game-btn').addEventListener('click', StorageManager.reset);
 
-  // --- DÉMARRAGE DU JEU ---
+  updateUI(state, 0);
+
   requestAnimationFrame(gameLoop);
 }
