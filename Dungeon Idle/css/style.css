@@ -1,12 +1,11 @@
-/* Style de base de la page */
+/* --- STYLES GÉNÉRAUX & MISE EN PAGE --- */
 body {
     background-color: #282c34;
     color: white;
     font-family: sans-serif;
-    text-align: center; /* Centre le h1 */
+    text-align: center;
 }
 
-/* Le conteneur principal du jeu - C'est ici que la magie opère */
 #game-world {
     display: flex;
     justify-content: space-around;
@@ -14,333 +13,120 @@ body {
     margin-top: 20px;
 }
 
-/* Style commun pour les deux panneaux */
+#game-status-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #ffc107;
+    min-height: 1.5em;
+}
+
+/* --- PANNEAUX & CONTENEURS --- */
 .panel {
     background-color: #3c4049;
     border: 1px solid #61dafb;
     border-radius: 8px;
     padding: 15px;
-    width: 32%; /* Ajustement pour 3 colonnes */
+    width: 32%;
     min-height: 400px;
+    position: relative;
 }
 
-
-/* Style pour la barre de progression (vie du monstre) */
-progress {
-    width: 80%;
-    height: 25px;
+#inventory-panel {
+    width: 90%;
+    margin: 20px auto;
+    min-height: 150px;
 }
 
-/* Style pour une carte de héros individuelle (on l'utilisera à l'étape 3) */
-.hero-card {
-    border: 1px solid #ccc;
+#loot-area { margin-top: 20px; }
+#enemy-panel { cursor: pointer; }
+
+/* --- CARTES (Héros, Boutique, Butin) --- */
+.hero-card, .shop-item-card, .loot-item-card {
     background-color: #4a505c;
+    border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
     margin-bottom: 10px;
-    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-#enemy-panel {
-    cursor: pointer;
+.loot-item-card {
+    cursor: default;
+    transition: transform 0.1s ease-in-out;
 }
+.loot-item-card:hover { transform: scale(1.03); }
 
-.hero-hp-bar {
-    width: 100%;
-    height: 10px;
-}
-
-/* Style pour griser un héros mort */
-.hero-card.dead {
-    opacity: 0.5;
-    background-color: #333;
-}
-
-.hero-stats {
-    font-size: 0.9em;
-    margin: 4px 0; /* Réduit l'espacement vertical */
-    color: #ddd;
-}
-
-.hero-card.recovering {
-    opacity: 0.5;
-    background-color: #333;
-}
-#game-status-message {
-    color: #ffc107; /* Jaune/orange pour l'alerte */
-    font-size: 1.2em;
-    font-weight: bold;
-    min-height: 1.5em; /* Pour éviter que la page ne "saute" */
-}
-
-.hero-xp-bar {
-    width: 100%;
-    height: 5px;
-}
-/* Changer la couleur de la barre d'XP pour la différencier */
-.hero-xp-bar::-webkit-progress-value { background-color: #ffd700; } /* Chrome, Safari */
-.hero-xp-bar::-moz-progress-bar { background-color: #ffd700; } /* Firefox */
-
-.xp-text {
-    font-size: 0.8em;
-    color: #ccc;
-    margin-bottom: 2px;
-}
-
-/* Utiliser Flexbox pour aligner le nom et le niveau du héros */
+/* --- HÉROS --- */
 .hero-title {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
 }
-
-.hero-card {
-    display: flex; /* Permet d'aligner le contenu et les contrôles */
-    justify-content: space-between;
-    align-items: center;
-}
-
-.hero-main-content {
-    flex-grow: 1; /* Le contenu principal prend toute la place disponible */
-}
-
-.hero-controls {
-    display: flex;
-    flex-direction: column; /* Place les boutons l'un sur l'autre */
-    margin-left: 10px;
-}
-
-.move-hero-btn {
-    background-color: #555;
-    border: 1px solid #777;
-    color: white;
-    cursor: pointer;
-    font-size: 1.2em;
-    padding: 2px 8px;
-    margin: 2px 0;
-    border-radius: 4px;
-}
-
-.move-hero-btn:hover {
-    background-color: #777;
-}
-
+.hero-main-content { flex-grow: 1; }
+.hero-stats { font-size: 0.9em; margin: 4px 0; color: #ddd; }
+.hero-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.hero-controls { display: flex; flex-direction: column; margin-left: 10px; }
 .move-placeholder { height: 28px; }
 
-.shop-item-card {
-    background-color: #4a505c;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
+.hero-card.dead, .hero-card.recovering {
+    opacity: 0.5;
+    background-color: #333;
+}
+
+/* Barres de vie et d'XP */
+progress { width: 80%; height: 25px; }
+.hero-hp-bar { width: 100%; height: 10px; }
+.hero-xp-bar { width: 100%; height: 5px; }
+.hero-xp-bar::-webkit-progress-value { background-color: #ffd700; }
+.hero-xp-bar::-moz-progress-bar { background-color: #ffd700; }
+.xp-text { font-size: 0.8em; color: #ccc; margin-bottom: 2px; }
+
+/* Équipement du héros */
+.hero-equipment-display { font-size: 0.85em; margin-top: 5px; }
+.hero-equipment { font-size: 0.8em; color: #ccc; margin: 5px 0; }
+.equipped-item {
+    background: #333;
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.shop-item-info p {
-    margin: 2px 0;
-    font-size: 0.9em;
-}
+/* --- OBJETS & RARETÉ --- */
+.item-info { flex-grow: 1; text-align: left; }
+.item-info p, .shop-item-info p { margin: 2px 0; font-size: 0.9em; }
+.shop-item-info { text-align: left; }
 
-.shop-item-info .item-name {
-    font-weight: bold;
-}
+.item-name { font-weight: bold; }
+.item-stats { color: #a7d3a7; }
+.item-affix { color: #b0c4de; font-style: italic; font-size: 0.85em; }
+.pickup-text { font-weight: bold; color: #ffd700; }
 
-.shop-item-info .item-stats {
-    color: #a7d3a7; /* Vert pour les stats positives */
-}
+.rarity-common { border-color: #ccc; }
+.rarity-magic { border-color: #61dafb; }
+.rarity-rare { border-color: #ffd700; }
 
-.buy-btn {
-    background-color: #ffd700;
-    color: #282c34;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
+.rarity-magic .item-name { color: #8ab4f8; }
+.rarity-rare .item-name { color: #fdd663; }
 
-.buy-btn:hover {
-    background-color: #ffec80;
-}
+/* Comparaison de stats */
+.stat-increase { color: #4CAF50; } /* Vert */
+.stat-decrease { color: #F44336; } /* Rouge */
 
-.hero-stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Deux colonnes de taille égale */
-    gap: 0 10px; /* Espace entre les colonnes */
-}
 
-.shop-item-card.rarity-common {
-    border-color: #ccc; /* Gris/Blanc */
-}
-.shop-item-card.rarity-magic {
-    border-color: #61dafb; /* Bleu */
-}
-.shop-item-card.rarity-rare {
-    border-color: #ffd700; /* Jaune */
-}
-
-.item-name {
-    font-weight: bold;
-}
-
-/* On colore aussi le nom de l'objet pour plus de clarté */
-.rarity-magic .item-name {
-    color: #8ab4f8; /* Un bleu plus lisible */
-}
-.rarity-rare .item-name {
-    color: #fdd663; /* Un jaune plus lisible */
-}
-
-.item-affix {
-    color: #b0c4de;
-    font-style: italic;
-    font-size: 0.85em;
-}
-
-#loot-area {
-    margin-top: 20px;
-}
-.loot-item-card {
-    cursor: pointer;
-    transition: transform 0.1s ease-in-out;
-}
-.loot-item-card:hover {
-    transform: scale(1.03);
-}
-.pickup-text {
-    font-weight: bold;
-    color: #ffd700;
-}
-
-#save-indicator {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    background-color: #282c34;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    border: 1px solid #61dafb;
-    display: flex;
-    align-items: center;
-    font-size: 1em;
-    opacity: 1;
-    transition: opacity 0.5s ease-in-out;
-    z-index: 1000; /* Pour être sûr qu'il est au-dessus de tout */
-}
-
-#save-indicator.hidden {
-    opacity: 0;
-    pointer-events: none; /* L'élément n'est pas cliquable quand il est caché */
-}
-
-#save-indicator .icon {
-    margin-right: 10px;
-    font-size: 1.2em;
-}
-
-/* L'animation de rotation */
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* On applique l'animation à l'icône quand la classe .saving est active */
-#save-indicator.saving .icon {
-    animation: spin 0.5s linear infinite;
-}
-
-#game-utility-controls {
-    position: fixed;
-    top: 15px;
-    left: 20px;
-    z-index: 2000;
-}
-
-#reset-game-btn {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #bd2130;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: background-color 0.2s;
-}
-
-#reset-game-btn:hover {
-    background-color: #c82333;
-}
-
-/* ... (tous vos styles existants) ... */
-
-#loot-area {
-    margin-top: 20px;
-}
-.loot-item-card {
-    cursor: pointer;
-    transition: transform 0.1s ease-in-out;
-}
-.loot-item-card:hover {
-    transform: scale(1.03);
-}
-.pickup-text {
-    font-weight: bold;
-    color: #ffd700;
-}
-
-/* NOUVEAUX STYLES POUR LES CONTRÔLES DE LA BOUTIQUE */
-#shop-controls {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #555;
-}
-
-.refresh-shop-btn {
-    background-color: #6c757d;
-    color: white;
-    border: 1px solid #888;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1em;
-    transition: background-color 0.2s;
-}
-
-.refresh-shop-btn:hover:not(:disabled) {
-    background-color: #808890;
-}
-
-.refresh-shop-btn:disabled {
-    background-color: #444;
-    color: #888;
-    cursor: not-allowed;
-    border-color: #555;
-}
-
-#inventory-panel {
-    width: 90%; /* On prend presque toute la largeur */
-    margin: 20px auto; /* On centre le panneau */
-    min-height: 150px;
-}
-
+/* --- INVENTAIRE --- */
 #inventory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 10px;
 }
-
+.inventory-item-container { position: relative; }
 .inventory-item {
-    width: 60px;
+    width: 100%;
     height: 60px;
     border: 2px solid #ccc;
     border-radius: 4px;
@@ -353,50 +139,99 @@ progress {
     cursor: pointer;
     transition: transform 0.2s;
 }
+.inventory-item:hover { transform: scale(1.1); }
+.inventory-item.rarity-magic { border-color: #8ab4f8; color: #8ab4f8; }
+.inventory-item.rarity-rare { border-color: #fdd663; color: #fdd663; }
+.inventory-item.selected { box-shadow: 0 0 10px 3px #ffd700; transform: scale(1.1); }
 
-.inventory-item:hover {
-    transform: scale(1.1);
+
+/* --- BOUTONS --- */
+.item-actions { display: flex; flex-direction: column; align-items: flex-end; margin-left: 10px; }
+.item-action-btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; margin-top: 4px; }
+
+.move-hero-btn { background-color: #555; border: 1px solid #777; color: white; cursor: pointer; font-size: 1.2em; padding: 2px 8px; margin: 2px 0; border-radius: 4px; }
+.move-hero-btn:hover { background-color: #777; }
+
+.buy-btn { background-color: #ffd700; color: #282c34; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.buy-btn:hover { background-color: #ffec80; }
+
+.pickup-btn { background-color: #28a745; color: white; }
+.pickup-btn:hover { background-color: #218838; }
+
+.discard-btn { background-color: #dc3545; color: white; padding: 4px 8px; font-size: 0.8em; }
+.discard-btn:hover { background-color: #c82333; }
+
+.inventory-discard-btn { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 20px; text-align: center; }
+
+.unequip-btn { background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; padding: 2px 5px; margin-left: 8px; }
+.unequip-btn:hover { background-color: #5a6268; }
+
+.equip-btn { width: 100%; padding: 8px; margin-top: 5px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.equip-btn:hover { background-color: #218838; }
+
+#reset-game-btn { background-color: #dc3545; color: white; border: 1px solid #bd2130; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background-color 0.2s; }
+#reset-game-btn:hover { background-color: #c82333; }
+
+.refresh-shop-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; color: #D4AF37; font-size: 1.8em; cursor: pointer; padding: 5px; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); transition: transform 0.3s ease-in-out, text-shadow 0.2s; }
+.refresh-shop-btn:hover:not(:disabled) { transform: rotate(180deg); background-color: #808890; }
+.refresh-shop-btn:disabled { background-color: #444; color: #888; border-color: #555; cursor: not-allowed; text-shadow: none; }
+
+
+/* --- ÉLÉMENTS D'INTERFACE (UI flottante) --- */
+#game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; }
+
+#save-indicator {
+    position: fixed; top: 15px; right: 20px;
+    background-color: #282c34; color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #61dafb;
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1000;
+}
+#save-indicator.hidden { opacity: 0; pointer-events: none; }
+#save-indicator .icon { margin-right: 10px; font-size: 1.2em; }
+#save-indicator.saving .icon { animation: spin 0.5s linear infinite; }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* On utilise les mêmes couleurs de rareté que pour la boutique */
-.inventory-item.rarity-magic {
-    border-color: #8ab4f8;
-    color: #8ab4f8;
+/* NOUVEAU : Style pour les notifications */
+#notification-area {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
-.inventory-item.rarity-rare {
-    border-color: #fdd663;
-    color: #fdd663;
-}
-
-.inventory-item.selected {
-    box-shadow: 0 0 10px 3px #ffd700;
-    transform: scale(1.1);
-}
-
-.hero-equipment {
-    font-size: 0.8em;
-    color: #ccc;
-    margin: 5px 0;
-}
-
-.equipped-item {
-    background: #333;
-    padding: 2px 5px;
-    border-radius: 3px;
-    margin-bottom: 3px;
-}
-
-.equip-btn {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    background-color: #28a745;
+.notification {
+    padding: 10px 20px;
+    border-radius: 5px;
     color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    font-weight: bold;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s, transform 0.5s;
 }
-.equip-btn:hover {
+.notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+.notification.error {
+    background-color: #c82333;
+    border: 1px solid #dc3545;
+}
+.notification.success {
     background-color: #218838;
+    border: 1px solid #28a745;
 }
-

@@ -10,30 +10,40 @@ const inventoryGridEl = document.getElementById('inventory-grid');
 export function renderInventory(inventory, itemToEquip) {
     if (!inventoryGridEl) return;
 
-    // Sécurité : si l'inventaire est undefined, on le traite comme un tableau vide.
     const items = inventory || [];
     inventoryGridEl.innerHTML = '';
 
     items.forEach((item, index) => {
+        const container = document.createElement('div');
+        container.className = 'inventory-item-container';
+
         const itemEl = document.createElement('div');
         itemEl.className = `inventory-item rarity-${item.rarity}`;
         itemEl.dataset.inventoryIndex = index;
         
-        // On met en surbrillance l'objet sélectionné
         if (itemToEquip && itemToEquip.inventoryIndex === index) {
             itemEl.classList.add('selected');
         }
 
-        // On crée une info-bulle simple
         let tooltipText = `${item.name}\n`;
         for (const [stat, value] of Object.entries(item.stats)) {
             tooltipText += `+${value} ${stat}\n`;
         }
         itemEl.title = tooltipText.trim();
-
-        // On pourrait ajouter une icône ici plus tard
         itemEl.textContent = item.baseDefinition.name.substring(0, 3).toUpperCase();
 
-        inventoryGridEl.appendChild(itemEl);
+        // On ajoute le bouton "Jeter" uniquement si on n'est pas en mode équipement
+        // pour éviter les clics accidentels.
+        if (!itemToEquip) {
+            const discardBtn = document.createElement('button');
+            discardBtn.className = 'item-action-btn discard-btn inventory-discard-btn';
+            discardBtn.dataset.inventoryIndex = index;
+            discardBtn.title = 'Jeter';
+            discardBtn.textContent = 'X';
+            container.appendChild(discardBtn);
+        }
+
+        container.appendChild(itemEl);
+        inventoryGridEl.appendChild(container);
     });
 }

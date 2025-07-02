@@ -17,10 +17,39 @@ const progressionControlsEl = document.getElementById('progression-controls');
 const shopAreaEl = document.getElementById('shop-area');
 const saveIndicatorEl = document.getElementById('save-indicator');
 const lootAreaEl = document.getElementById('loot-area');
-const shopControlsEl = document.getElementById('shop-controls');
 
 
-// --- FONCTIONS INTERNES (AIDES) ---
+// --- NOUVELLE FONCTION DE NOTIFICATION ---
+/**
+ * Affiche une notification temporaire à l'écran.
+ * @param {string} message - Le message à afficher.
+ * @param {string} type - Le type de notif ('error', 'success', etc.).
+ */
+function showNotification(message, type = 'error') {
+    let area = document.getElementById('notification-area');
+    if (!area) {
+        area = document.createElement('div');
+        area.id = 'notification-area';
+        document.body.appendChild(area);
+    }
+
+    const notif = document.createElement('div');
+    notif.className = `notification ${type}`;
+    notif.textContent = message;
+    area.appendChild(notif);
+
+    requestAnimationFrame(() => {
+        notif.classList.add('show');
+    });
+
+    setTimeout(() => {
+        notif.classList.remove('show');
+        notif.addEventListener('transitionend', () => notif.remove());
+    }, 3000);
+}
+
+
+// --- FONCTIONS DE MISE À JOUR DE L'UI ---
 
 function updateMonsterUI(monster) {
   if (!monster) {
@@ -39,72 +68,90 @@ function updateMonsterUI(monster) {
   monsterHpBarEl.value = monster.currentHp;
 }
 
+function renderEquippedItem(hero, slot) {
+    const item = hero.equipment[slot];
+    const slotName = slot.charAt(0).toUpperCase() + slot.slice(1);
+    if (!item) {
+        return `<span>${slotName}: Aucun</span>`;
+    }
+    return `
+        <div class="equipped-item rarity-${item.rarity}">
+            <span>${slotName}: ${item.name}</span>
+            <button class="unequip-btn" data-hero-id="${hero.id}" data-slot="${slot}" title="Déséquiper">X</button>
+        </div>
+    `;
+}
+
+function renderStatLine(label, baseValue, change, isPercent = false) {
+    const displayValue = isPercent ? (baseValue * 100).toFixed(1) + '%' : Math.ceil(baseValue);
+    if (change === 0 || change === undefined) {
+        return `<p class="hero-stats">${label}: ${displayValue}</p>`;
+    }
+    
+    const newValue = baseValue + change;
+    const changeSign = change > 0 ? '+' : '';
+    const changeClass = change > 0 ? 'stat-increase' : 'stat-decrease';
+    const changeDisplay = isPercent ? (change * 100).toFixed(1) + '%' : Math.round(change);
+    const newDisplayValue = isPercent ? (newValue * 100).toFixed(1) + '%' : Math.ceil(newValue);
+
+    return `<p class="hero-stats">${label}: <span class="${changeClass}">${newDisplayValue} (${changeSign}${changeDisplay})</span></p>`;
+}
+
 function updateHeroesUI(heroes, itemToEquip) {
-  const existingCardIds = new Set();
+  heroesAreaEl.innerHTML = '';
   heroes.forEach((hero, index) => {
-    existingCardIds.add(hero.id);
-    let card = heroesAreaEl.querySelector(`[data-hero-id="${hero.id}"]`);
-    if (!card) {
-      card = document.createElement('div');
-      card.className = 'hero-card';
-      card.dataset.heroId = hero.id;
-      card.innerHTML = `
+    const card = document.createElement('div');
+    card.className = 'hero-card';
+    card.dataset.heroId = hero.id;
+
+    let statsHtml;
+    if (itemToEquip && hero.equipment[itemToEquip.baseDefinition.slot] !== undefined) {
+        const changes = hero.calculateStatChanges(itemToEquip);
+        const currentStats = hero.getAllStats();
+        statsHtml = `
+            ${renderStatLine('DPS', currentStats.dps, changes.dps)}
+            ${renderStatLine('HP', currentStats.maxHp, changes.maxHp)}
+            ${renderStatLine('Armure', currentStats.armor, changes.armor)}
+            ${renderStatLine('Crit', currentStats.critChance, changes.critChance, true)}
+            ${renderStatLine('HP/s', currentStats.hpRegen, changes.hpRegen)}
+        `;
+    } else {
+        statsHtml = `
+            <p class="hero-stats">DPS: ${hero.dps.toFixed(1)}</p>
+            <p class="hero-stats">HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}</p>
+            <p class="hero-stats">Armure: ${hero.armor}</p>
+            <p class="hero-stats">Crit: ${(hero.critChance * 100).toFixed(1)}%</p>
+            <p class="hero-stats">HP/s: ${hero.hpRegen.toFixed(1)}</p>
+        `;
+    }
+    
+    card.innerHTML = `
         <div class="hero-main-content">
           <div class="hero-title">
-            <strong class="hero-name"></strong>
-            <span class="hero-level"></span>
+            <strong class="hero-name">${hero.name}</strong>
+            <span class="hero-level">Niveau ${hero.level}</span>
           </div>
           <div class="hero-stats-grid">
-            <p class="hero-stats" data-stat="dps"></p>
-            <p class="hero-stats" data-stat="hp"></p>
-            <p class="hero-stats" data-stat="armor"></p>
-            <p class="hero-stats" data-stat="crit"></p>
-            <p class="hero-stats" data-stat="hpRegen"></p>
+            ${statsHtml}
           </div>
-          <progress class="hero-hp-bar" value="100" max="100"></progress>
-          <p class="hero-stats xp-text" data-stat="xp"></p>
-          <progress class="hero-xp-bar" value="0" max="100"></progress>
-          <div class="hero-equipment-display"></div>
+          <progress class="hero-hp-bar" value="${hero.hp}" max="${hero.maxHp}"></progress>
+          <p class="hero-stats xp-text">${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP</p>
+          <progress class="hero-xp-bar" value="${hero.xp}" max="${hero.xpToNextLevel}"></progress>
+          <div class="hero-equipment-display">
+            ${renderEquippedItem(hero, 'arme')}
+            ${renderEquippedItem(hero, 'torse')}
+          </div>
         </div>
-        <div class="hero-controls"></div>
-      `;
-    }
-    card.querySelector('.hero-name').textContent = hero.name;
-    card.querySelector('.hero-level').textContent = `Niveau ${hero.level}`;
-    card.querySelector('[data-stat="dps"]').textContent = `DPS: ${hero.dps.toFixed(1)}`;
-    card.querySelector('[data-stat="hp"]').textContent = `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}`;
-    card.querySelector('[data-stat="armor"]').textContent = `Armure: ${hero.armor}`;
-    card.querySelector('[data-stat="crit"]').textContent = `Crit: ${(hero.critChance * 100).toFixed(1)}%`;
-    card.querySelector('[data-stat="hpRegen"]').textContent = `HP/s: ${hero.hpRegen.toFixed(1)}`;
-    card.querySelector('[data-stat="xp"]').textContent = `${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP`;
-    const hpBar = card.querySelector('.hero-hp-bar');
-    hpBar.value = hero.hp;
-    hpBar.max = hero.maxHp;
-    const xpBar = card.querySelector('.hero-xp-bar');
-    xpBar.value = hero.xp;
-    xpBar.max = hero.xpToNextLevel;
-    const weaponName = hero.equipment.arme ? hero.equipment.arme.name : 'Mains nues';
-    const armorName = hero.equipment.torse ? hero.equipment.torse.name : 'Aucune armure';
-    card.querySelector('.hero-equipment-display').innerHTML = `
-        <span>Arme: ${weaponName}</span>
-        <span>Torse: ${armorName}</span>
+        <div class="hero-controls">
+          ${index > 0 ? `<button class="move-hero-btn up" title="Monter" data-hero-id="${hero.id}" data-direction="up">▲</button>` : `<div class="move-placeholder"></div>`}
+          ${index < heroes.length - 1 ? `<button class="move-hero-btn down" title="Descendre" data-hero-id="${hero.id}" data-direction="down">▼</button>` : `<div class="move-placeholder"></div>`}
+        </div>
     `;
-    const controls = card.querySelector('.hero-controls');
-    controls.innerHTML = `
-      ${index > 0 ? `<button class="move-hero-btn up" title="Monter" data-hero-id="${hero.id}" data-direction="up">▲</button>` : `<div class="move-placeholder"></div>`}
-      ${index < heroes.length - 1 ? `<button class="move-hero-btn down" title="Descendre" data-hero-id="${hero.id}" data-direction="down">▼</button>` : `<div class="move-placeholder"></div>`}
-    `;
-    if (heroesAreaEl.children[index] !== card) {
-      heroesAreaEl.insertBefore(card, heroesAreaEl.children[index] || null);
-    }
+    
     card.classList.toggle('recovering', hero.status === 'recovering');
     card.classList.toggle('equip-mode', !!itemToEquip);
+    heroesAreaEl.appendChild(card);
   });
-  for (const card of Array.from(heroesAreaEl.children)) {
-    if (!existingCardIds.has(card.dataset.heroId)) {
-      card.remove();
-    }
-  }
 }
 
 function updateGoldUI(gold) {
@@ -132,62 +179,54 @@ function updateShopUI(shopItems) {
     shopItems.forEach((item, index) => {
         const itemCard = document.createElement('div');
         itemCard.className = `shop-item-card rarity-${item.rarity}`;
-        let affixesHtml = '';
-        for (const [stat, value] of Object.entries(item.affixes)) {
+        let affixesHtml = Object.entries(item.affixes).map(([stat, value]) => {
             const affixInfo = AFFIX_DEFINITIONS[stat];
-            if (affixInfo) {
-                const statText = affixInfo.text.replace('X', value);
-                affixesHtml += `<p class="item-affix">${statText}</p>`;
-            }
-        }
+            return affixInfo ? `<p class="item-affix">${affixInfo.text.replace('X', value)}</p>` : '';
+        }).join('');
+
         const primaryStatValue = item.stats[item.baseDefinition.stat];
         const primaryStatName = item.baseDefinition.stat;
+
         itemCard.innerHTML = `
-            <div class="shop-item-info">
+            <div class="item-info">
                 <p class="item-name">${item.name}</p>
                 <p class="item-stats">+${primaryStatValue} ${primaryStatName}</p>
                 ${affixesHtml}
             </div>
-            <button class="buy-btn" data-item-index="${index}">${item.cost} Or</button>
+            <div class="item-actions">
+                 <button class="item-action-btn buy-btn" data-item-index="${index}">${item.cost} Or</button>
+            </div>
         `;
         shopAreaEl.appendChild(itemCard);
     });
 }
 
-function updateShopControlsUI(gold, shopRefreshCost) {
-    shopControlsEl.innerHTML = `
-        <button class="refresh-shop-btn" id="refresh-shop-btn">
-            Nettoyer la boutique
-        </button>
-    `;
-}
-
 function updateLootUI(droppedItems) {
-    if (!lootAreaEl || !droppedItems) {
-        if(lootAreaEl) lootAreaEl.innerHTML = '';
-        return;
-    }
     lootAreaEl.innerHTML = '';
+    if (!droppedItems) return;
+
     droppedItems.forEach((item, index) => {
         const itemCard = document.createElement('div');
-        itemCard.className = `shop-item-card rarity-${item.rarity} loot-item-card`;
-        itemCard.dataset.lootIndex = index;
-        let affixesHtml = '';
-        for (const [stat, value] of Object.entries(item.affixes)) {
+        itemCard.className = `loot-item-card rarity-${item.rarity}`;
+        
+        let affixesHtml = Object.entries(item.affixes).map(([stat, value]) => {
             const affixInfo = AFFIX_DEFINITIONS[stat];
-            if (affixInfo) {
-                affixesHtml += `<p class="item-affix">${affixInfo.text.replace('X', value)}</p>`;
-            }
-        }
+            return affixInfo ? `<p class="item-affix">${affixInfo.text.replace('X', value)}</p>` : '';
+        }).join('');
+
         const primaryStatValue = item.stats[item.baseDefinition.stat];
         const primaryStatName = item.baseDefinition.stat;
+
         itemCard.innerHTML = `
-            <div class="shop-item-info">
+            <div class="item-info">
                 <p class="item-name">${item.name}</p>
                 <p class="item-stats">+${primaryStatValue} ${primaryStatName}</p>
                 ${affixesHtml}
             </div>
-            <span class="pickup-text">Ramasser</span>
+            <div class="item-actions">
+                <button class="item-action-btn pickup-btn" data-loot-index="${index}">Ramasser</button>
+                <button class="item-action-btn discard-btn" data-loot-index="${index}" title="Jeter">Jeter</button>
+            </div>
         `;
         lootAreaEl.appendChild(itemCard);
     });
@@ -248,8 +287,6 @@ function updateUI(state) {
   updateDungeonUI(state.dungeonFloor, state.encounterIndex, state.encountersPerFloor, state.gameStatus);
   updateLootUI(state.droppedItems);
   updateShopUI(state.shopItems);
-  updateShopControlsUI(state.gold, state.shopRefreshCost);
-  // CORRECTION : On appelle la fonction importée pour dessiner l'inventaire
   renderInventory(state.inventory, state.itemToEquip);
 }
 
@@ -260,5 +297,6 @@ export {
     renderProgressionControls,
     showSavingIndicator,
     showSaveSuccess,
-    hideSaveIndicator
+    hideSaveIndicator,
+    showNotification
 };

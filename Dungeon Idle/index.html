@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Clickpocalypse Clone</title>
+    <title>Dungeon Descent</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -10,7 +10,7 @@
         <button id="reset-game-btn" title="Efface la sauvegarde et recommence">Réinitialiser</button>
     </div>
 
-    <h1>Clickpocalypse Clone</h1>
+    <h1>Dungeon Descent</h1>
     
     <div id="save-indicator" class="hidden">
         <span class="icon"></span>
@@ -24,7 +24,6 @@
     <div id="game-status-message"></div>
 
     <div id="game-world">
-        <!-- PANNEAU DE GAUCHE : LE GROUPE DU JOUEUR -->
         <div id="party-panel" class="panel">
             <h2>Aventuriers</h2>
             <p>Or: <span id="player-gold">0</span></p>
@@ -35,7 +34,6 @@
             <div id="recruitment-area"></div>
         </div>
 
-        <!-- PANNEAU CENTRAL : LES ENNEMIS -->
         <div id="enemy-panel" class="panel">
             <div id="monster-area">
                 <h2 id="monster-name"></h2>
@@ -44,22 +42,19 @@
             </div>
         </div>
 
-        <!-- PANNEAU DE DROITE : LE MARCHAND -->
         <div id="shop-panel" class="panel">
+            <button class="refresh-shop-btn" id="refresh-shop-btn" title="Rafraîchir la boutique">🔄</button>
+            
             <h2>Marchand</h2>
-            <!-- NOUVELLE ZONE POUR LES CONTRÔLES DE LA BOUTIQUE -->
-            <div id="shop-controls"></div>
             <div id="shop-area">
-                <!-- Les objets en vente apparaîtront ici -->
-            </div>
+                </div>
         </div>
     </div>
 
     <div id="inventory-panel" class="panel">
         <h2>Inventaire</h2>
         <div id="inventory-grid">
-            <!-- Les objets de l'inventaire apparaîtront ici -->
-        </div>
+            </div>
     </div>
 
     <script type="module" src="js/main.js"></script>
