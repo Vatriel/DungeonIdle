@@ -19,12 +19,7 @@ const saveIndicatorEl = document.getElementById('save-indicator');
 const lootAreaEl = document.getElementById('loot-area');
 
 
-// --- NOUVELLE FONCTION DE NOTIFICATION ---
-/**
- * Affiche une notification temporaire à l'écran.
- * @param {string} message - Le message à afficher.
- * @param {string} type - Le type de notif ('error', 'success', etc.).
- */
+// --- FONCTION DE NOTIFICATION (maintenant appelée par le coeur du jeu) ---
 function showNotification(message, type = 'error') {
     let area = document.getElementById('notification-area');
     if (!area) {
@@ -49,7 +44,7 @@ function showNotification(message, type = 'error') {
 }
 
 
-// --- FONCTIONS DE MISE À JOUR DE L'UI ---
+// --- FONCTIONS DE RENDU SPÉCIFIQUES (inchangées) ---
 
 function updateMonsterUI(monster) {
   if (!monster) {
@@ -278,25 +273,52 @@ function hideSaveIndicator() {
     saveIndicatorEl.classList.add('hidden');
 }
 
+
 // --- FONCTION PRINCIPALE EXPORTÉE ---
 function updateUI(state) {
+  // --- Traitement des notifications ---
+  if (state.notifications && state.notifications.length > 0) {
+      const notification = state.notifications.shift(); // Prend la plus ancienne
+      showNotification(notification.message, notification.type);
+  }
+
+  // --- Mises à jour qui se produisent à chaque frame ---
   updateMonsterUI(state.activeMonster);
-  updateHeroesUI(state.heroes, state.itemToEquip);
   updateGoldUI(state.gold);
   updateGameStatusMessage(state.gameStatus);
   updateDungeonUI(state.dungeonFloor, state.encounterIndex, state.encountersPerFloor, state.gameStatus);
-  updateLootUI(state.droppedItems);
-  updateShopUI(state.shopItems);
-  renderInventory(state.inventory, state.itemToEquip);
+
+  // --- Mises à jour conditionnelles basées sur les drapeaux ---
+  if (state.ui.heroesNeedUpdate) {
+      updateHeroesUI(state.heroes, state.itemToEquip);
+      state.ui.heroesNeedUpdate = false;
+  }
+  if (state.ui.shopNeedsUpdate) {
+      updateShopUI(state.shopItems);
+      state.ui.shopNeedsUpdate = false;
+  }
+  if (state.ui.inventoryNeedsUpdate) {
+      renderInventory(state.inventory, state.itemToEquip);
+      state.ui.inventoryNeedsUpdate = false;
+  }
+  if (state.ui.lootNeedsUpdate) {
+      updateLootUI(state.droppedItems);
+      state.ui.lootNeedsUpdate = false;
+  }
+  if (state.ui.recruitmentNeedsUpdate) {
+      renderRecruitmentArea(state.heroDefinitions);
+      state.ui.recruitmentNeedsUpdate = false;
+  }
+  if (state.ui.progressionNeedsUpdate) {
+      renderProgressionControls(state.gameStatus);
+      state.ui.progressionNeedsUpdate = false;
+  }
 }
 
 // --- EXPORT NOMMÉS ---
 export {
     updateUI,
-    renderRecruitmentArea,
-    renderProgressionControls,
     showSavingIndicator,
     showSaveSuccess,
     hideSaveIndicator,
-    showNotification
 };

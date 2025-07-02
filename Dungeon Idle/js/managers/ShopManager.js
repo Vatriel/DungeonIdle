@@ -3,7 +3,7 @@
 import { ITEM_DEFINITIONS } from '../data/itemData.js';
 import { Item } from '../entities/Item.js';
 import { InventoryManager } from './InventoryManager.js';
-import { showNotification } from '../ui/UIUpdater.js';
+// MODIFIÉ : On n'importe plus rien de UIUpdater
 
 const SHOP_RESTOCK_INTERVAL = 10;
 const MAX_SHOP_ITEMS = 8;
@@ -24,6 +24,7 @@ function restock(state) {
     const itemLevel = state.dungeonFloor;
     const newItem = new Item(itemDef, itemLevel);
     state.shopItems.push(newItem);
+    state.ui.shopNeedsUpdate = true;
 }
 
 function buyItem(state, itemIndex) {
@@ -31,22 +32,28 @@ function buyItem(state, itemIndex) {
     if (!item) return;
 
     if (state.gold < item.cost) {
-        showNotification("Pas assez d'or !");
+        // NOUVEAU : On ajoute une notification à la file au lieu d'appeler une fonction d'UI
+        state.notifications.push({ message: "Pas assez d'or !", type: 'error' });
         return;
     }
     
     if (!InventoryManager.addItem(state, item)) {
-        showNotification("Inventaire plein !");
+        // NOUVEAU : On ajoute une notification à la file
+        state.notifications.push({ message: "Inventaire plein !", type: 'error' });
         return;
     }
   
     state.gold -= item.cost;
     state.shopItems.splice(itemIndex, 1);
-    showNotification("Achat réussi !", "success");
+    state.ui.shopNeedsUpdate = true;
+    
+    // NOUVEAU : On ajoute une notification de succès à la file
+    state.notifications.push({ message: "Achat réussi !", type: 'success' });
 }
 
 function clearShop(state) {
     state.shopItems = [];
+    state.ui.shopNeedsUpdate = true;
 }
 
 export const ShopManager = {
