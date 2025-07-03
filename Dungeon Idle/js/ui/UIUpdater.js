@@ -5,7 +5,7 @@ import { renderInventory } from './InventoryUI.js';
 import { renderHeroesUI, updateHeroVitals } from './HeroUI.js';
 import { renderShopUI } from './ShopUI.js';
 import { renderLootUI } from './LootUI.js';
-import { flushDamageBuckets, handleSpamTexts, showNotification } from './EffectsUI.js';
+import { flushDamageBuckets, showNotification } from './EffectsUI.js';
 
 const monsterNameEl = document.getElementById('monster-name');
 const monsterHpBarEl = document.getElementById('monster-hp-bar');
@@ -18,6 +18,8 @@ const floorDisplayEl = document.getElementById('floor-display');
 const encounterDisplayEl = document.getElementById('encounter-display');
 const progressionControlsEl = document.getElementById('progression-controls');
 const autoProgressionControlsEl = document.getElementById('auto-progression-controls');
+
+let lastRenderedMonsterInstanceId = null;
 
 function createElement(tag, options = {}) {
     const el = document.createElement(tag);
@@ -40,12 +42,29 @@ function updateMonsterUI(monster) {
     monsterNameEl.textContent = '---';
     monsterHpTextEl.textContent = 'HP: 0 / 0';
     monsterHpBarEl.style.width = '0%';
+    lastRenderedMonsterInstanceId = null;
     return;
   }
   
+  const isNewMonster = monster.instanceId !== lastRenderedMonsterInstanceId;
   const maxHp = monster.totalMaxHp || monster.maxHp;
   const currentHp = monster.currentHp || 0;
   const hpPercent = (currentHp / maxHp) * 100;
+
+  if (isNewMonster) {
+      // MODIFIÉ : Application de la technique de `requestAnimationFrame` pour une initialisation instantanée.
+      monsterHpBarEl.classList.add('no-transition');
+      monsterHpBarEl.style.width = '100%';
+
+      requestAnimationFrame(() => {
+          monsterHpBarEl.classList.remove('no-transition');
+          // On met à jour avec le vrai pourcentage au cas où le monstre aurait déjà subi des dégâts.
+          monsterHpBarEl.style.width = `${hpPercent}%`; 
+      });
+      lastRenderedMonsterInstanceId = monster.instanceId;
+  } else {
+      monsterHpBarEl.style.width = `${hpPercent}%`;
+  }
 
   if (monster instanceof MonsterGroup) {
     const plural = monster.initialCount > 1 ? 's' : '';
@@ -55,10 +74,9 @@ function updateMonsterUI(monster) {
   }
 
   monsterHpTextEl.textContent = `HP: ${Math.ceil(currentHp)} / ${Math.ceil(maxHp)}`;
-  monsterHpBarEl.style.width = `${hpPercent}%`;
 }
 
-function updateGoldUI(state, oldGold) {
+function updateGoldUI(state, oldState) {
     let totalGoldFind = 0;
     state.heroes.forEach(hero => totalGoldFind += hero.goldFind);
     const goldFindPercent = (totalGoldFind * 100).toFixed(0);
@@ -70,7 +88,7 @@ function updateGoldUI(state, oldGold) {
     }
     playerGoldEl.textContent = goldText;
 
-    if (currentGold > oldGold) {
+    if (currentGold > (oldState.gold || 0)) {
         playerGoldEl.classList.add('gold-pop');
         playerGoldEl.addEventListener('animationend', () => {
             playerGoldEl.classList.remove('gold-pop');
@@ -78,18 +96,36 @@ function updateGoldUI(state, oldGold) {
     }
 }
 
-function updateGameStatusMessage(gameStatus) {
-  gameStatusMessageEl.textContent = gameStatus === 'party_wipe' ? 'Groupe anéanti ! Récupération en cours...' : '';
+function updateGameStatusMessage(state) {
+  const { gameStatus, bossUnlockReached, bossIsDefeated, pendingBossFight } = state;
+  let message = '';
+  if (gameStatus === 'party_wipe') {
+    message = 'Groupe anéanti ! Récupération en cours...';
+  } else if (gameStatus === 'encounter_cooldown') {
+    message = 'Combat terminé !';
+  } else if (pendingBossFight) {
+    message = 'Le boss arrive !';
+  } else if (gameStatus === 'boss_fight') {
+    message = 'COMBAT CONTRE LE BOSS !';
+  } else if (bossIsDefeated) {
+    message = 'Étage terminé ! Exploration libre.';
+  } else if (bossUnlockReached) {
+    message = 'Le gardien de l\'étage peut être affronté.';
+  }
+  gameStatusMessageEl.textContent = message;
 }
 
-function updateDungeonUI(floor, encounter, gameStatus) {
-  floorDisplayEl.textContent = `Étage ${floor}`;
+function updateDungeonUI(state) {
+  const { dungeonFloor, encounterIndex, gameStatus, bossIsDefeated } = state;
+  floorDisplayEl.textContent = `Étage ${dungeonFloor}`;
+  
+  // MODIFIÉ : Affichage simplifié et corrigé.
   if (gameStatus === 'boss_fight') {
     encounterDisplayEl.textContent = "COMBAT DE BOSS";
-  } else if (gameStatus === 'farming_boss_available' || gameStatus === 'floor_cleared') {
-    encounterDisplayEl.textContent = `Étage ${floor} (Exploration)`;
+  } else if (bossIsDefeated) {
+    encounterDisplayEl.textContent = `Étage ${dungeonFloor} (Terminé)`;
   } else {
-    encounterDisplayEl.textContent = `Rencontre ${encounter}`;
+    encounterDisplayEl.textContent = `Rencontre ${encounterIndex}`;
   }
 }
 
@@ -113,9 +149,11 @@ function renderRecruitmentArea(heroDefinitions) {
 
 function updateProgressionUI(state) {
   progressionControlsEl.innerHTML = '';
-  if (state.gameStatus === 'farming_boss_available') {
-    progressionControlsEl.appendChild(createElement('button', { textContent: 'Affronter le Boss', id: 'fight-boss-btn' }));
-  } else if (state.gameStatus === 'floor_cleared') {
+  if (state.bossUnlockReached && !state.bossIsDefeated) {
+    if (!state.pendingBossFight) {
+        progressionControlsEl.appendChild(createElement('button', { textContent: 'Affronter le Boss', id: 'fight-boss-btn' }));
+    }
+  } else if (state.bossIsDefeated) {
     progressionControlsEl.appendChild(createElement('button', { textContent: 'Étage Suivant', id: 'next-floor-btn' }));
   }
 
@@ -134,7 +172,7 @@ function updateProgressionUI(state) {
 
 export function updateUI(state, dt, oldState) {
   flushDamageBuckets(state, dt);
-  handleSpamTexts(state);
+  
   if (state.notifications && state.notifications.length > 0) {
       const notification = state.notifications.shift();
       showNotification(notification.message, notification.type);
@@ -142,9 +180,9 @@ export function updateUI(state, dt, oldState) {
 
   updateMonsterUI(state.activeMonster);
   updateHeroVitals(state.heroes);
-  updateGoldUI(state, oldState.gold);
-  updateGameStatusMessage(state.gameStatus);
-  updateDungeonUI(state.dungeonFloor, state.encounterIndex, state.gameStatus);
+  updateGoldUI(state, oldState);
+  updateGameStatusMessage(state);
+  updateDungeonUI(state);
 
   if (state.ui.heroesNeedUpdate) {
       renderHeroesUI(state.heroes, state.itemToEquip, state.ui.heroCardState, state.eventBus);

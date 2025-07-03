@@ -23,7 +23,6 @@ function gameLoop(currentTime) {
   if (lastTime === 0) lastTime = currentTime;
   const deltaTime = (currentTime - lastTime) / 1000;
   
-  // On garde une copie de l'état précédent pour les comparaisons dans l'UI
   const oldState = { gold: state.gold };
 
   updateGameLogic(deltaTime);
@@ -54,7 +53,7 @@ async function triggerSave() {
 function onPlayerClick() {
   if (state.activeMonster && state.activeMonster.isAlive()) {
     state.activeMonster.takeDamage(PLAYER_CLICK_DAMAGE);
-    if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, timer: 0.3 };
+    if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
     state.damageBuckets.monster.damage += PLAYER_CLICK_DAMAGE;
   }
 }
@@ -113,7 +112,6 @@ function setupEventListeners() {
     state.heroes.forEach(hero => {
       if (hero.isFighting()) {
         const previousLevel = hero.level;
-        // CORRIGÉ : On passe l'eventBus pour la notification de level up
         hero.addXp(data.xpGained, eventBus);
         if (hero.level > previousLevel) {
           needsFullUpdate = true;
@@ -147,14 +145,18 @@ function setupEventListeners() {
 
   eventBus.on('floor_advanced', (data) => {
       state.dungeonFloor = data.newFloor;
+      // MODIFIÉ : On réinitialise à 1 pour la première rencontre.
       state.encounterIndex = 1;
-      state.gameStatus = 'fighting';
+      state.bossUnlockReached = false;
+      state.bossIsDefeated = false;
+      state.pendingBossFight = false;
+      state.gameStatus = 'encounter_cooldown';
+      state.encounterCooldown = 0.5;
+      state.activeMonster = null;
       UnlockManager.checkUnlocks(state, eventBus);
       state.ui.progressionNeedsUpdate = true;
-      DungeonManager.generateNextEncounter(state, eventBus);
   });
 
-  // NOUVEAU : Écouteurs pour les effets visuels et le drag-and-drop
   eventBus.on('hero_leveled_up', (data) => {
       const heroCard = document.querySelector(`.hero-card[data-hero-id="${data.heroId}"]`);
       if (heroCard) {
@@ -175,9 +177,6 @@ function setupEventListeners() {
 
   eventBus.on('notification_sent', (data) => state.notifications.push(data));
   eventBus.on('ui_heroes_need_update', () => { state.ui.heroesNeedUpdate = true; });
-  eventBus.on('hero_healed', (data) => {
-    state.floatingTexts.push({ text: data.amount, type: 'heal', targetId: data.targetId });
-  });
 }
 
 function getNewGameState() {
@@ -187,8 +186,13 @@ function getNewGameState() {
         gold: 0,
         gameStatus: 'fighting',
         dungeonFloor: 1,
+        // MODIFIÉ : Le compteur commence à 1.
         encounterIndex: 1,
         encountersPerFloor: 10,
+        encounterCooldown: 0,
+        bossUnlockReached: false,
+        bossIsDefeated: false,
+        pendingBossFight: false,
         shopItems: [],
         shopRestockTimer: 0,
         autosaveTimer: 0,
@@ -212,7 +216,7 @@ function getNewGameState() {
         notifications: [],
         floatingTexts: [],
         damageBuckets: {},
-        eventBus: eventBus, // On passe l'instance de l'eventBus à l'état
+        eventBus: eventBus,
     };
 
     for (const key in initialState.heroDefinitions) {
@@ -242,11 +246,17 @@ export function initGame() {
   
   if (loadedState) {
     state = loadedState;
-    state.eventBus = eventBus; // On s'assure que l'eventBus est présent
+    state.eventBus = eventBus;
     const heroCardState = state.ui?.heroCardState || {};
     const shopLockModeActive = state.ui?.shopLockModeActive || false;
     const autoProgressToBoss = state.ui?.autoProgressToBoss || false;
     const autoProgressToNextFloor = state.ui?.autoProgressToNextFloor || false;
+    
+    state.encounterCooldown = state.encounterCooldown || 0;
+    state.bossUnlockReached = state.bossUnlockReached || false;
+    state.bossIsDefeated = state.bossIsDefeated || false;
+    state.pendingBossFight = state.pendingBossFight || false;
+
     state.ui = {
         shopNeedsUpdate: true,
         heroesNeedUpdate: true,
@@ -273,7 +283,8 @@ export function initGame() {
   UnlockManager.checkUnlocks(state, eventBus);
   
   if (isNewGame) {
-      DungeonManager.generateNextEncounter(state, eventBus);
+      state.gameStatus = 'encounter_cooldown';
+      state.encounterCooldown = 0.5;
   }
 
   // --- Setup des écouteurs d'événements du DOM ---
@@ -321,9 +332,18 @@ export function initGame() {
     const button = event.target.closest('[data-hero-id]');
     if (button) recruitHero(button.dataset.heroId);
   });
+  
   document.getElementById('progression-controls').addEventListener('click', (event) => {
-    if (event.target.id === 'fight-boss-btn') DungeonManager.startBossFight(state, eventBus);
-    else if (event.target.id === 'next-floor-btn') DungeonManager.advanceToNextFloor(state, eventBus);
+    if (event.target.id === 'fight-boss-btn') {
+        state.pendingBossFight = true;
+        eventBus.emit('notification_sent', { 
+            message: 'Le boss arrive ! Préparez-vous !', 
+            type: 'success' 
+        });
+        state.ui.progressionNeedsUpdate = true;
+    } else if (event.target.id === 'next-floor-btn') {
+        DungeonManager.advanceToNextFloor(state, eventBus);
+    }
   });
 
   document.getElementById('auto-progression-controls').addEventListener('change', (event) => {
@@ -334,36 +354,43 @@ export function initGame() {
     }
   });
 
+  // MODIFIÉ : La logique de cet écouteur est corrigée pour que toutes les actions soient possibles.
   document.getElementById('heroes-area').addEventListener('click', (event) => {
-    event.preventDefault();
     const target = event.target;
-
+    
     const toggleButton = target.closest('.toggle-view-btn');
     if (toggleButton) {
+        event.preventDefault();
         toggleHeroCardView(toggleButton.dataset.heroId);
         return;
     }
 
-    if (target.matches('.unequip-btn')) {
-        const { heroId, slot } = target.dataset;
+    const unequipButton = target.closest('.unequip-btn');
+    if (unequipButton) {
+        event.preventDefault();
+        const { heroId, slot } = unequipButton.dataset;
         const hero = state.heroes.find(h => h.id === heroId);
         if (hero) InventoryManager.unequipItemFromHero(state, hero, slot, eventBus);
         return;
     }
+    
+    const moveButton = target.closest('.move-hero-btn');
+    if (moveButton) {
+        event.preventDefault();
+        const { heroId, direction } = moveButton.dataset;
+        moveHero(heroId, direction);
+        return;
+    }
 
+    // L'équipement d'objet n'est possible que si on n'a pas cliqué sur un autre bouton.
     if (state.itemToEquip) {
+        event.preventDefault();
         const heroCard = target.closest('.hero-card');
         if (heroCard) {
             const hero = state.heroes.find(h => h.id === heroCard.dataset.heroId);
             if (hero) InventoryManager.equipItemOnHero(state, hero, eventBus);
         } else {
             InventoryManager.cancelEquip(state);
-        }
-    } else {
-        const button = target.closest('.move-hero-btn');
-        if (button) {
-          const { heroId, direction } = button.dataset;
-          moveHero(heroId, direction);
         }
     }
   });

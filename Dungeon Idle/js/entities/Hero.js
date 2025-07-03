@@ -32,10 +32,19 @@ export class Hero {
     this.hp = this.maxHp;
   }
 
-  update(party, dt, eventBus) {
-      this.regenerate(this.hpRegen * dt);
+  // MODIFIÉ : On passe maintenant l'état complet (state) pour que les sous-classes comme Priest puissent y accéder
+  update(state, dt, eventBus) {
+      // La régénération de base se fait ici
+      const regenResult = this.regenerate(this.hpRegen * dt);
+      if (regenResult.statusChanged) {
+          state.ui.heroesNeedUpdate = true;
+      }
+      
       if (this.status === 'recovering') {
-          this.regenerate(RECOVERY_RATE_SLOW * dt);
+          const recoveryResult = this.regenerate(RECOVERY_RATE_SLOW * dt);
+          if (recoveryResult.statusChanged) {
+              state.ui.heroesNeedUpdate = true;
+          }
       }
 
       let statsNeedRecalc = false;
@@ -142,7 +151,6 @@ export class Hero {
       return unequippedItem;
   }
 
-  // CORRIGÉ : On passe l'eventBus pour pouvoir émettre un événement
   levelUp(eventBus) {
     this.level++;
     this.xp -= this.xpToNextLevel;
@@ -151,7 +159,6 @@ export class Hero {
     this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
     this._recalculateStats();
     this.hp = this.maxHp;
-    // NOUVEAU : On émet un événement pour que l'UI puisse réagir
     eventBus.emit('hero_leveled_up', { heroId: this.id });
   }
 
@@ -160,17 +167,23 @@ export class Hero {
       this._recalculateStats();
   }
 
+  // MODIFIÉ : La fonction retourne maintenant un objet détaillé
   regenerate(amount) {
-      if (this.hp >= this.maxHp) return 0;
+      if (this.hp >= this.maxHp) return { healedAmount: 0, statusChanged: false };
       const oldHp = this.hp;
+      const oldStatus = this.status;
+
       this.hp = Math.min(this.maxHp, this.hp + amount);
       if (this.status === 'recovering' && this.hp >= this.maxHp / 2) {
           this.status = 'fighting';
       }
-      return this.hp - oldHp;
+      
+      return {
+          healedAmount: this.hp - oldHp,
+          statusChanged: oldStatus !== this.status
+      };
   }
 
-  // CORRIGÉ : On passe l'eventBus à levelUp
   addXp(amount, eventBus) { 
       this.xp += amount; 
       while (this.xp >= this.xpToNextLevel) { 
@@ -178,12 +191,15 @@ export class Hero {
       } 
   }
   
+  // MODIFIÉ : La fonction retourne maintenant un booléen si le statut a changé
   takeDamage(amount) { 
-      if (this.status !== 'fighting') return; 
+      if (this.status !== 'fighting') return false; 
       this.hp = Math.max(0, this.hp - amount); 
       if (this.hp === 0) { 
           this.status = 'recovering'; 
-      } 
+          return true; // Le statut a changé !
+      }
+      return false; // Pas de changement de statut
   }
   
   isFighting() { return this.status === 'fighting'; }

@@ -103,7 +103,7 @@ h3 { font-size: 1em; margin-top: 20px;}
 .hero-card.collapsed { align-items: flex-start; padding-top: 5px; padding-bottom: 5px; }
 .hero-card.collapsed .hero-controls { flex-direction: column; align-items: center; margin-left: auto; }
 
-/* CORRIGÉ : Nouveaux styles pour les barres de progression personnalisées */
+/* --- BARRES DE PROGRESSION --- */
 .progress-bar-container {
     width: 100%;
     height: 10px;
@@ -117,6 +117,10 @@ h3 { font-size: 1em; margin-top: 20px;}
     height: 100%;
     width: 0%; /* La largeur est contrôlée par JS */
     transition: width 0.1s linear; /* Transition douce */
+}
+/* NOUVEAU : Classe pour désactiver la transition lors de l'initialisation. */
+.progress-bar-fill.no-transition {
+    transition: none !important;
 }
 .progress-bar-fill.hp { background-color: #e53935; }
 .progress-bar-fill.xp { background-color: #ffd700; }

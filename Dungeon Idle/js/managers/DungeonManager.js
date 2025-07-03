@@ -14,25 +14,46 @@ const BASE_BOSS_HP = 200;
 const BASE_BOSS_DPS = 15;
 const ARMOR_CONSTANT = 200;
 const BASE_DROP_CHANCE = 0.15;
+const ENCOUNTER_COOLDOWN_DURATION = 0.5;
 
 function update(state, dt, eventBus) {
     switch (state.gameStatus) {
         case 'fighting':
-        case 'farming_boss_available':
         case 'boss_fight':
-        case 'floor_cleared':
             runFightingLogic(state, dt, eventBus);
             break;
+        
         case 'party_wipe':
             runPartyWipeRecoveryLogic(state, dt, eventBus);
             break;
+        
+        case 'encounter_cooldown':
+            runEncounterCooldownLogic(state, dt, eventBus);
+            break;
+    }
+}
+
+function runEncounterCooldownLogic(state, dt, eventBus) {
+    state.encounterCooldown -= dt;
+    if (state.encounterCooldown <= 0) {
+        prepareNextEncounter(state, eventBus);
+    }
+}
+
+function prepareNextEncounter(state, eventBus) {
+    // MODIFIÉ : La logique de déclenchement du boss est plus directe.
+    if (state.pendingBossFight) {
+        state.pendingBossFight = false; 
+        startBossFight(state, eventBus);
+    } else {
+        generateRegularEncounter(state, eventBus);
     }
 }
 
 function runFightingLogic(state, dt, eventBus) {
     if (!state.activeMonster) {
-        console.warn("Aucun monstre actif, tentative d'en générer un nouveau.");
-        generateNextEncounter(state, eventBus);
+        console.warn("État de combat sans monstre actif. Préparation d'une nouvelle rencontre.");
+        prepareNextEncounter(state, eventBus);
         return;
     }
 
@@ -44,7 +65,7 @@ function runFightingLogic(state, dt, eventBus) {
     state.ui.heroBarsNeedUpdate = true; 
 
     state.heroes.forEach(hero => {
-        hero.update(state.heroes, dt, eventBus);
+        hero.update(state, dt, eventBus);
     });
     
     let totalPartyDps = 0;
@@ -59,7 +80,7 @@ function runFightingLogic(state, dt, eventBus) {
             const damageDealt = heroDps * dt;
             totalPartyDps += damageDealt;
 
-            if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, timer: 0.3 };
+            if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
             if (isCrit) state.damageBuckets.monster.crit += damageDealt;
             else state.damageBuckets.monster.damage += damageDealt;
         }
@@ -85,31 +106,42 @@ function runFightingLogic(state, dt, eventBus) {
         const dpsDealtToHero = Math.min(remainingDpsToDeal, maxDpsOnThisHero);
         const damageReduction = hero.armor / (hero.armor + ARMOR_CONSTANT);
         const finalDamage = dpsDealtToHero * (1 - damageReduction);
-        hero.takeDamage(finalDamage);
-        if (!state.damageBuckets[hero.id]) state.damageBuckets[hero.id] = { damage: 0, crit: 0, timer: 0.3 };
+        
+        if (hero.takeDamage(finalDamage)) {
+            state.ui.heroesNeedUpdate = true;
+        }
+
+        if (!state.damageBuckets[hero.id]) state.damageBuckets[hero.id] = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
         state.damageBuckets[hero.id].damage += finalDamage;
         remainingDpsToDeal -= dpsDealtToHero;
     }
 
     if (state.heroes.every(hero => !hero.isFighting())) {
-        if (state.gameStatus === 'boss_fight') {
-            eventBus.emit('dungeon_state_changed', { newStatus: 'farming_boss_available' });
-        } else {
-            eventBus.emit('dungeon_state_changed', { newStatus: 'party_wipe' });
-        }
+        eventBus.emit('dungeon_state_changed', { newStatus: 'party_wipe' });
     }
 }
 
 function runPartyWipeRecoveryLogic(state, dt, eventBus) {
     state.ui.heroBarsNeedUpdate = true;
     let allHeroesFull = true;
+    let statusHasChanged = false;
+
     state.heroes.forEach(hero => {
-        hero.regenerate(RECOVERY_RATE_WIPE * dt);
+        const result = hero.regenerate(RECOVERY_RATE_WIPE * dt);
+        if (result.statusChanged) {
+            statusHasChanged = true;
+        }
         if (hero.hp < hero.maxHp) allHeroesFull = false;
     });
+
+    if (statusHasChanged) {
+        state.ui.heroesNeedUpdate = true;
+    }
+
     if (allHeroesFull) {
         state.heroes.forEach(hero => hero.status = 'fighting');
-        eventBus.emit('dungeon_state_changed', { newStatus: 'fighting', fullHeal: false });
+        eventBus.emit('dungeon_state_changed', { newStatus: 'encounter_cooldown', fullHeal: true });
+        state.encounterCooldown = ENCOUNTER_COOLDOWN_DURATION;
         state.ui.heroesNeedUpdate = true;
     }
 }
@@ -127,29 +159,34 @@ function handleMonsterDefeated(state, eventBus) {
         generateLoot(state, eventBus);
     }
 
-    if (state.gameStatus === 'boss_fight') {
-        eventBus.emit('dungeon_state_changed', { newStatus: 'floor_cleared' });
+    const wasBoss = state.gameStatus === 'boss_fight';
+
+    if (wasBoss) {
+        state.bossIsDefeated = true;
         if (state.ui.autoProgressToNextFloor) {
             advanceToNextFloor(state, eventBus);
-        }
-        return;
-    }
-    
-    if (state.gameStatus === 'fighting') {
-        const newEncounterIndex = state.encounterIndex + 1;
-        if (newEncounterIndex > state.encountersPerFloor) {
-            eventBus.emit('dungeon_state_changed', { newStatus: 'farming_boss_available' });
-            if (state.ui.autoProgressToBoss) {
-                startBossFight(state, eventBus);
-            }
             return;
         }
+    } else {
+        state.encounterIndex++;
+        if (state.encounterIndex > state.encountersPerFloor && !state.bossUnlockReached) {
+            state.bossUnlockReached = true;
+            if (state.ui.autoProgressToBoss) {
+                state.pendingBossFight = true;
+            }
+        }
     }
-    generateNextEncounter(state, eventBus);
+
+    state.gameStatus = 'encounter_cooldown';
+    state.encounterCooldown = ENCOUNTER_COOLDOWN_DURATION;
+    state.activeMonster = null;
+
+    eventBus.emit('dungeon_state_changed', { newStatus: 'encounter_cooldown' });
+    state.ui.progressionNeedsUpdate = true;
 }
 
 function generateLoot(state, eventBus) {
-    const itemLevel = state.activeMonster.level;
+    const itemLevel = state.activeMonster.level || state.dungeonFloor;
     const itemKeys = Object.keys(ITEM_DEFINITIONS);
     const randomKey = itemKeys[Math.floor(Math.random() * itemKeys.length)];
     const itemDef = ITEM_DEFINITIONS[randomKey];
@@ -157,7 +194,7 @@ function generateLoot(state, eventBus) {
     eventBus.emit('item_dropped', { item: newItem });
 }
 
-function generateNextEncounter(state, eventBus) {
+function generateRegularEncounter(state, eventBus) {
     const currentFloor = state.dungeonFloor;
     const availableMonsters = Object.values(MONSTER_DEFINITIONS).filter(def => currentFloor >= def.appearsAtFloor);
 
@@ -180,19 +217,18 @@ function generateNextEncounter(state, eventBus) {
     };
     
     const newMonster = new MonsterGroup(scaledDef, monsterCount);
-    const newEncounterIndex = state.gameStatus === 'fighting' ? state.encounterIndex + 1 : state.encounterIndex;
+    
+    state.gameStatus = 'fighting';
 
     eventBus.emit('encounter_changed', {
-        newStatus: state.gameStatus,
-        encounterIndex: newEncounterIndex,
+        newStatus: 'fighting',
+        encounterIndex: state.encounterIndex,
         newMonster: newMonster
     });
 }
 
 
 function startBossFight(state, eventBus) {
-    if (state.gameStatus !== 'farming_boss_available') return;
-    
     eventBus.emit('dungeon_state_changed', { newStatus: 'boss_fight', fullHeal: true });
 
     const scale = Math.pow(ENEMY_SCALING_FACTOR, state.dungeonFloor - 1);
@@ -210,19 +246,12 @@ function startBossFight(state, eventBus) {
 }
 
 function advanceToNextFloor(state, eventBus) {
-    if (state.gameStatus !== 'floor_cleared') return;
-    
-    const newFloor = state.dungeonFloor + 1;
-    eventBus.emit('floor_advanced', { newFloor: newFloor });
-    
-    // CORRIGÉ : La logique de génération du prochain monstre est maintenant
-    // gérée par l'écouteur d'événement 'floor_advanced' dans game.js.
-    // On retire l'appel redondant et potentiellement buggé qui était ici.
+    if (!state.bossIsDefeated) return;
+    eventBus.emit('floor_advanced', { newFloor: state.dungeonFloor + 1 });
 }
 
 export const DungeonManager = {
     update,
-    generateNextEncounter,
     startBossFight,
     advanceToNextFloor,
 };

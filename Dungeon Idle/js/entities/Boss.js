@@ -14,6 +14,8 @@ export class Boss {
     this.currentHp = hp;
     this.dps = dps;
     this.level = level;
+    // NOUVEAU : Un identifiant unique pour chaque instance de monstre.
+    this.instanceId = crypto.randomUUID();
   }
 
   /**

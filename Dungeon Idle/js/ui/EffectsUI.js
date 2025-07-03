@@ -8,8 +8,6 @@ const saveIndicatorEl = document.getElementById('save-indicator');
 const BUCKET_FLUSH_INTERVAL = 0.3; 
 
 // --- Fonctions utilitaires ---
-// NOTE: Cette fonction est dupliquée dans plusieurs fichiers UI.
-// Pour une future amélioration, elle pourrait être centralisée dans un fichier `domUtils.js`.
 function createElement(tag, options = {}) {
     const el = document.createElement(tag);
     if (options.className) el.className = options.className;
@@ -59,6 +57,7 @@ function createFloatingText(text, type, targetElement) {
     textEl.addEventListener('animationend', () => textEl.remove());
 }
 
+// MODIFIÉ : La fonction gère maintenant les soins (heal) en plus des dégâts et des crits.
 export function flushDamageBuckets(state, dt) {
     for (const targetId in state.damageBuckets) {
         const bucket = state.damageBuckets[targetId];
@@ -72,31 +71,22 @@ export function flushDamageBuckets(state, dt) {
             if (targetElement) {
                 if (bucket.damage > 0) createFloatingText(bucket.damage, 'damage', targetElement);
                 if (bucket.crit > 0) createFloatingText(bucket.crit, 'crit', targetElement);
-                if (bucket.heal > 0) createFloatingText(bucket.heal, 'heal', targetElement);
+                if (bucket.heal > 0) createFloatingText(bucket.heal, 'heal', targetElement); // NOUVEAU
             }
             
+            // On réinitialise toutes les valeurs du seau
             bucket.damage = 0;
             bucket.crit = 0;
-            bucket.heal = 0;
+            bucket.heal = 0; // NOUVEAU
             bucket.timer = BUCKET_FLUSH_INTERVAL;
         }
     }
 }
 
+// MODIFIÉ : Cette fonction n'est plus utile car les soins sont maintenant gérés par les "buckets".
+// On la laisse vide ou on la supprime pour nettoyer le code.
 export function handleSpamTexts(state) {
-    if (!state.floatingTexts || state.floatingTexts.length === 0) return;
-
-    state.floatingTexts.forEach(textInfo => {
-        const targetElement = textInfo.targetId === 'monster'
-            ? document.getElementById('monster-area')
-            : document.querySelector(`.hero-card[data-hero-id="${textInfo.targetId}"]`);
-        
-        if (targetElement) {
-            createFloatingText(textInfo.text, textInfo.type, targetElement);
-        }
-    });
-
-    state.floatingTexts = [];
+    // Cette fonction est maintenant obsolète.
 }
 
 export function showSavingIndicator() {

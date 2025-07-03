@@ -12,6 +12,9 @@ export class MonsterGroup {
     this.level = scaledDef.level; // Le niveau des monstres du groupe
     this.initialCount = count;
     
+    // NOUVEAU : Un identifiant unique pour chaque instance de monstre.
+    this.instanceId = crypto.randomUUID();
+    
     // On garde la définition complète pour accéder au DPS de base plus tard
     this.baseDefinition = scaledDef;
 

@@ -21,23 +21,25 @@ export class Priest extends Hero {
     /**
      * Surcharge la méthode de mise à jour du Héros pour y ajouter
      * la logique spécifique du Prêtre (soin et buffs).
-     * @param {Array<Hero>} party - La liste de tous les héros alliés.
+     * @param {object} state - L'état global du jeu.
      * @param {number} dt - Le delta time.
      * @param {EventBus} eventBus - Le bus d'événements pour la communication.
      */
-    update(party, dt, eventBus) {
+    // MODIFIÉ : On reçoit l'état global (state) au lieu de juste la "party"
+    update(state, dt, eventBus) {
         // On appelle d'abord la méthode update du parent (pour gérer les durées des buffs)
-        super.update(party, dt, eventBus);
+        // Note : La méthode parente est un peu redondante maintenant, mais on la laisse pour la gestion des buffs sur le prêtre lui-même.
+        super.update(state, dt, eventBus);
 
         if (!this.isFighting()) return;
 
         // --- Logique de Soin ---
-        this.performHeal(party, dt, eventBus);
+        this.performHeal(state.heroes, dt, state); // MODIFIÉ : On passe l'état global
 
         // --- Logique de Buff ---
         this.buffCooldown -= dt;
-        if (this.buffCooldown <= 0) {
-            this.applyBuff(party);
+        if (this.buffCooldown <= 0 && this._statsCache.finalBuffChance > 0) {
+            this.applyBuff(state.heroes);
             // Le cooldown est basé sur la chance : 1 / chance = temps moyen entre les buffs
             this.buffCooldown = 1 / this._statsCache.finalBuffChance;
         }
@@ -45,8 +47,9 @@ export class Priest extends Hero {
 
     /**
      * Trouve l'allié le plus blessé et lui applique un soin.
+     * MODIFIÉ : Utilise maintenant les "damageBuckets" pour regrouper les textes de soin.
      */
-    performHeal(party, dt, eventBus) {
+    performHeal(party, dt, state) {
         let target = null;
         let lowestHpPercent = 1;
 
@@ -64,8 +67,22 @@ export class Priest extends Hero {
         if (target) {
             const healAmount = (this._statsCache.finalHealPower || 0) * dt;
             if (healAmount > 0) {
-                const healedAmount = target.regenerate(healAmount); // regenerate retourne le montant soigné
-                eventBus.emit('hero_healed', { targetId: target.id, amount: healedAmount });
+                const result = target.regenerate(healAmount); // regenerate retourne un objet
+                const healedAmount = result.healedAmount;
+                
+                // Si le statut a changé (ex: de 'recovering' à 'fighting'), on force une mise à jour de l'UI
+                if (result.statusChanged) {
+                    state.ui.heroesNeedUpdate = true;
+                }
+
+                // NOUVEAU : On ajoute le soin au "seau" de la cible pour regrouper l'affichage
+                if (healedAmount > 0) {
+                    if (!state.damageBuckets[target.id]) {
+                        state.damageBuckets[target.id] = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
+                    }
+                    // On s'assure que la propriété heal existe avant d'ajouter
+                    state.damageBuckets[target.id].heal = (state.damageBuckets[target.id].heal || 0) + healedAmount;
+                }
             }
         }
     }
