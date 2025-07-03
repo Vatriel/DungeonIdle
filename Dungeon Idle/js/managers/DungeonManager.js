@@ -41,7 +41,6 @@ function runEncounterCooldownLogic(state, dt, eventBus) {
 }
 
 function prepareNextEncounter(state, eventBus) {
-    // MODIFIÉ : La logique de déclenchement du boss est plus directe.
     if (state.pendingBossFight) {
         state.pendingBossFight = false; 
         startBossFight(state, eventBus);
@@ -117,6 +116,7 @@ function runFightingLogic(state, dt, eventBus) {
     }
 
     if (state.heroes.every(hero => !hero.isFighting())) {
+        state.pendingBossFight = false;
         eventBus.emit('dungeon_state_changed', { newStatus: 'party_wipe' });
     }
 }
@@ -168,13 +168,16 @@ function handleMonsterDefeated(state, eventBus) {
             return;
         }
     } else {
-        state.encounterIndex++;
-        if (state.encounterIndex > state.encountersPerFloor && !state.bossUnlockReached) {
+        // CORRECTION : La logique de déblocage du boss est revue pour être plus fiable.
+        // On vérifie d'abord si la rencontre actuelle est celle qui débloque le boss.
+        if (state.encounterIndex >= state.encountersPerFloor && !state.bossUnlockReached) {
             state.bossUnlockReached = true;
             if (state.ui.autoProgressToBoss) {
                 state.pendingBossFight = true;
             }
         }
+        // On incrémente ensuite le compteur pour la prochaine rencontre.
+        state.encounterIndex++;
     }
 
     state.gameStatus = 'encounter_cooldown';
@@ -184,6 +187,7 @@ function handleMonsterDefeated(state, eventBus) {
     eventBus.emit('dungeon_state_changed', { newStatus: 'encounter_cooldown' });
     state.ui.progressionNeedsUpdate = true;
 }
+
 
 function generateLoot(state, eventBus) {
     const itemLevel = state.activeMonster.level || state.dungeonFloor;

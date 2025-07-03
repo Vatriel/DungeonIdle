@@ -32,7 +32,6 @@ function save(state) {
             autosaveTimer: state.autosaveTimer,
             shopRestockTimer: state.shopRestockTimer,
             encounterCooldown: state.encounterCooldown,
-            // NOUVEAU : Sauvegarde des drapeaux de progression.
             bossUnlockReached: state.bossUnlockReached,
             bossIsDefeated: state.bossIsDefeated,
             pendingBossFight: state.pendingBossFight,
@@ -41,6 +40,8 @@ function save(state) {
                 id: hero.id,
                 level: hero.level,
                 xp: hero.xp,
+                // CORRECTION : Ajout de la sauvegarde de l'XP nécessaire pour le prochain niveau.
+                xpToNextLevel: hero.xpToNextLevel,
                 status: hero.status,
                 equipment: hero.equipment,
                 activeBuffs: hero.activeBuffs,
@@ -121,6 +122,7 @@ function load() {
                     break;
             }
 
+            // Object.assign va maintenant correctement restaurer xpToNextLevel depuis la sauvegarde.
             Object.assign(hero, heroData);
 
             for (const slot in hero.equipment) {

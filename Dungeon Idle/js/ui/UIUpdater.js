@@ -52,13 +52,11 @@ function updateMonsterUI(monster) {
   const hpPercent = (currentHp / maxHp) * 100;
 
   if (isNewMonster) {
-      // MODIFIÉ : Application de la technique de `requestAnimationFrame` pour une initialisation instantanée.
       monsterHpBarEl.classList.add('no-transition');
       monsterHpBarEl.style.width = '100%';
 
       requestAnimationFrame(() => {
           monsterHpBarEl.classList.remove('no-transition');
-          // On met à jour avec le vrai pourcentage au cas où le monstre aurait déjà subi des dégâts.
           monsterHpBarEl.style.width = `${hpPercent}%`; 
       });
       lastRenderedMonsterInstanceId = monster.instanceId;
@@ -108,7 +106,7 @@ function updateGameStatusMessage(state) {
   } else if (gameStatus === 'boss_fight') {
     message = 'COMBAT CONTRE LE BOSS !';
   } else if (bossIsDefeated) {
-    message = 'Étage terminé ! Exploration libre.';
+    message = 'Le gardien de l\'étage est vaincu !';
   } else if (bossUnlockReached) {
     message = 'Le gardien de l\'étage peut être affronté.';
   }
@@ -116,14 +114,15 @@ function updateGameStatusMessage(state) {
 }
 
 function updateDungeonUI(state) {
-  const { dungeonFloor, encounterIndex, gameStatus, bossIsDefeated } = state;
+  const { dungeonFloor, encounterIndex, gameStatus, bossIsDefeated, bossUnlockReached } = state;
   floorDisplayEl.textContent = `Étage ${dungeonFloor}`;
   
-  // MODIFIÉ : Affichage simplifié et corrigé.
   if (gameStatus === 'boss_fight') {
     encounterDisplayEl.textContent = "COMBAT DE BOSS";
   } else if (bossIsDefeated) {
-    encounterDisplayEl.textContent = `Étage ${dungeonFloor} (Terminé)`;
+    encounterDisplayEl.textContent = `Exploration (Boss vaincu)`;
+  } else if (bossUnlockReached) {
+    encounterDisplayEl.textContent = `Rencontre ${encounterIndex} (Boss disponible)`;
   } else {
     encounterDisplayEl.textContent = `Rencontre ${encounterIndex}`;
   }
@@ -147,13 +146,19 @@ function renderRecruitmentArea(heroDefinitions) {
   }
 }
 
+/**
+ * MODIFIÉ: Ajout d'une condition pour ne pas afficher le bouton "Affronter le Boss"
+ * si un combat de boss est déjà en cours.
+ */
 function updateProgressionUI(state) {
   progressionControlsEl.innerHTML = '';
-  if (state.bossUnlockReached && !state.bossIsDefeated) {
-    if (!state.pendingBossFight) {
-        progressionControlsEl.appendChild(createElement('button', { textContent: 'Affronter le Boss', id: 'fight-boss-btn' }));
-    }
+  
+  // On vérifie que le boss est débloqué, pas encore vaincu, et qu'on n'est PAS
+  // déjà en train de l'attendre ou de le combattre.
+  if (state.bossUnlockReached && !state.bossIsDefeated && !state.pendingBossFight && state.gameStatus !== 'boss_fight') {
+    progressionControlsEl.appendChild(createElement('button', { textContent: 'Affronter le Boss', id: 'fight-boss-btn' }));
   } else if (state.bossIsDefeated) {
+    // Le bouton "Étage Suivant" n'apparaît que si le boss est vaincu.
     progressionControlsEl.appendChild(createElement('button', { textContent: 'Étage Suivant', id: 'next-floor-btn' }));
   }
 
