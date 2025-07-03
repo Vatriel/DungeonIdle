@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Dungeon Descent</title>
-    <!-- NOUVEAU : Ajout des polices depuis Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -44,7 +43,13 @@
         <div id="enemy-panel" class="panel">
             <div id="monster-area">
                 <h2 id="monster-name"></h2>
-                <p>HP: <progress id="monster-hp-bar" value="100" max="100"></progress></p>
+                <!-- CORRIGÉ : Remplacement de <progress> par une structure de divs -->
+                <div class="monster-hp-container">
+                    <p id="monster-hp-text">HP: 0 / 0</p>
+                    <div class="progress-bar-container">
+                        <div id="monster-hp-bar" class="progress-bar-fill hp"></div>
+                    </div>
+                </div>
                 <div id="loot-area"></div>
             </div>
         </div>
@@ -67,7 +72,6 @@
             </div>
     </div>
 
-    <!-- NOUVEAU : Conteneur pour les textes flottants -->
     <div id="floating-text-container"></div>
 
     <script type="module" src="js/main.js"></script>

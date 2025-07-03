@@ -19,14 +19,49 @@ function addItem(state, item, eventBus) {
     return true;
 }
 
+function equipItemFromDrag(state, inventoryIndex, heroId, eventBus) {
+    const itemToEquip = state.inventory[inventoryIndex];
+    const hero = state.heroes.find(h => h.id === heroId);
+
+    if (!itemToEquip || !hero) {
+        console.error("Erreur lors de l'équipement par drag-and-drop : objet ou héros non trouvé.");
+        return;
+    }
+
+    const classRestriction = itemToEquip.baseDefinition.classRestriction;
+    if (classRestriction && !classRestriction.includes(hero.id)) {
+        eventBus.emit('notification_sent', { message: `Cet objet est réservé à la classe ${classRestriction.join(', ')}.`, type: 'error' });
+        return;
+    }
+    
+    const itemSubType = itemToEquip.baseDefinition.subType;
+    if (itemSubType) {
+        const allowedSubTypes = hero.definition.allowedSubTypes?.[itemToEquip.baseDefinition.slot];
+        if (allowedSubTypes && !allowedSubTypes.includes(itemSubType)) {
+            eventBus.emit('notification_sent', { message: `Ce type d'objet ne peut pas être équipé par un(e) ${hero.name}.`, type: 'error' });
+            return;
+        }
+    }
+
+    const currentlyEquipped = hero.equipment[itemToEquip.baseDefinition.slot];
+    state.inventory.splice(inventoryIndex, 1);
+    hero.equipItem(itemToEquip);
+
+    if (currentlyEquipped) {
+        addItem(state, currentlyEquipped, eventBus);
+    }
+    
+    state.ui.heroesNeedUpdate = true;
+    state.ui.inventoryNeedsUpdate = true;
+}
+
+
 function equipItemOnHero(state, hero, eventBus) {
     if (!state.itemToEquip || !hero) return;
 
     const itemToEquip = state.inventory[state.itemToEquip.inventoryIndex];
     if (!itemToEquip) return;
 
-        // --- NOUVELLE LOGIQUE DE VÉRIFICATION ---
-    // 1. Restriction de classe
     const classRestriction = itemToEquip.baseDefinition.classRestriction;
     if (classRestriction && !classRestriction.includes(hero.id)) {
         eventBus.emit('notification_sent', { message: `Cet objet est réservé à la classe ${classRestriction.join(', ')}.`, type: 'error' });
@@ -34,7 +69,6 @@ function equipItemOnHero(state, hero, eventBus) {
         return;
     }
     
-    // 2. Restriction de sous-type d'objet
     const itemSubType = itemToEquip.baseDefinition.subType;
     if (itemSubType) {
         const allowedSubTypes = hero.definition.allowedSubTypes?.[itemToEquip.baseDefinition.slot];
@@ -45,26 +79,10 @@ function equipItemOnHero(state, hero, eventBus) {
         }
     }
 
-    const restriction = itemToEquip.baseDefinition.classRestriction;
-    if (restriction && !restriction.includes(hero.id)) {
-        eventBus.emit('notification_sent', {
-            message: `Cet objet ne peut pas être équipé par un(e) ${hero.name}.`,
-            type: 'error'
-        });
-        cancelEquip(state);
-        return;
-    }
-
-    // On récupère l'objet actuellement équipé AVANT d'équiper le nouveau
     const currentlyEquipped = hero.equipment[itemToEquip.baseDefinition.slot];
-
-    // On retire le nouvel objet de l'inventaire
     state.inventory.splice(state.itemToEquip.inventoryIndex, 1);
-    
-    // La méthode equipItem du héros s'occupe de la logique interne
     hero.equipItem(itemToEquip);
 
-    // Si un objet était déjà équipé, on l'ajoute à l'inventaire
     if (currentlyEquipped) {
         addItem(state, currentlyEquipped, eventBus);
     }
@@ -73,15 +91,12 @@ function equipItemOnHero(state, hero, eventBus) {
     cancelEquip(state);
 }
 
-// --- MODIFICATION MAJEURE ICI ---
 function unequipItemFromHero(state, hero, slot, eventBus) {
     if (isInventoryFull(state)) {
         eventBus.emit('notification_sent', { message: "Inventaire plein pour déséquiper !", type: 'error' });
         return;
     }
 
-    // On appelle la méthode du héros, qui s'occupe de la logique
-    // et nous retourne l'objet qui a été déséquipé.
     const itemToUnequip = hero.unequipItem(slot);
 
     if (itemToUnequip) {
@@ -136,9 +151,13 @@ function discardInventoryItem(state, itemIndex) {
     state.ui.inventoryNeedsUpdate = true;
 }
 
+// CORRECTION : C'est ce bloc qui doit être présent et correct.
+// Il rassemble toutes les fonctions du fichier dans un seul objet
+// et l'exporte sous le nom "InventoryManager".
 export const InventoryManager = {
     addItem,
     equipItemOnHero,
+    equipItemFromDrag,
     unequipItemFromHero,
     selectItemToEquip,
     cancelEquip,

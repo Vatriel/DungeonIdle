@@ -1,4 +1,4 @@
-// js/core/Game.js
+// js/core/game.js
 
 import { HERO_DEFINITIONS } from '../data/heroData.js';
 import { Hero } from '../entities/Hero.js';
@@ -7,7 +7,9 @@ import { StorageManager } from '../managers/StorageManager.js';
 import { ShopManager } from '../managers/ShopManager.js';
 import { InventoryManager } from '../managers/InventoryManager.js';
 import { DungeonManager } from '../managers/DungeonManager.js';
-import { updateUI, showSavingIndicator, showSaveSuccess, hideSaveIndicator } from '../ui/UIUpdater.js';
+import { UnlockManager } from '../managers/UnlockManager.js';
+import { updateUI } from '../ui/UIUpdater.js';
+import { showSavingIndicator, showSaveSuccess, hideSaveIndicator } from '../ui/EffectsUI.js';
 import { EventBus } from './EventBus.js';
 
 const PLAYER_CLICK_DAMAGE = 2;
@@ -20,8 +22,12 @@ const eventBus = new EventBus();
 function gameLoop(currentTime) {
   if (lastTime === 0) lastTime = currentTime;
   const deltaTime = (currentTime - lastTime) / 1000;
+  
+  // On garde une copie de l'état précédent pour les comparaisons dans l'UI
+  const oldState = { gold: state.gold };
+
   updateGameLogic(deltaTime);
-  updateUI(state, deltaTime);
+  updateUI(state, deltaTime, oldState);
   lastTime = currentTime;
   requestAnimationFrame(gameLoop);
 }
@@ -34,12 +40,6 @@ function updateGameLogic(dt) {
   if (state.autosaveTimer >= AUTOSAVE_INTERVAL) {
     state.autosaveTimer = 0;
     triggerSave();
-  }
-
-  const warriorDef = state.heroDefinitions.WARRIOR;
-  if (warriorDef && state.gold >= warriorDef.cost && warriorDef.status === 'locked') {
-    warriorDef.status = 'available';
-    state.ui.recruitmentNeedsUpdate = true;
   }
 }
 
@@ -107,11 +107,14 @@ function toggleHeroCardView(heroId) {
 function setupEventListeners() {
   eventBus.on('monster_defeated', (data) => {
     state.gold += data.goldGained;
+    UnlockManager.checkUnlocks(state, eventBus);
+
     let needsFullUpdate = false;
     state.heroes.forEach(hero => {
       if (hero.isFighting()) {
         const previousLevel = hero.level;
-        hero.addXp(data.xpGained);
+        // CORRIGÉ : On passe l'eventBus pour la notification de level up
+        hero.addXp(data.xpGained, eventBus);
         if (hero.level > previousLevel) {
           needsFullUpdate = true;
         }
@@ -122,12 +125,14 @@ function setupEventListeners() {
   });
 
   eventBus.on('item_dropped', (data) => InventoryManager.addDroppedItem(state, data.item));
+  
   eventBus.on('encounter_changed', (data) => {
       state.gameStatus = data.newStatus;
       state.encounterIndex = data.encounterIndex;
       state.activeMonster = data.newMonster;
       state.ui.progressionNeedsUpdate = true;
   });
+  
   eventBus.on('dungeon_state_changed', (data) => {
       state.gameStatus = data.newStatus;
       state.ui.progressionNeedsUpdate = true;
@@ -139,22 +144,35 @@ function setupEventListeners() {
           state.ui.heroesNeedUpdate = true;
       }
   });
+
   eventBus.on('floor_advanced', (data) => {
       state.dungeonFloor = data.newFloor;
       state.encounterIndex = 1;
       state.gameStatus = 'fighting';
-      const mageDef = state.heroDefinitions.MAGE;
-      if (state.dungeonFloor === 2 && mageDef.status === 'locked') {
-          mageDef.status = 'available';
-          state.ui.recruitmentNeedsUpdate = true;
-      }
-      const priestDef = state.heroDefinitions.PRIEST;
-      if (data.newFloor === 11 && priestDef.status === 'locked') {
-          priestDef.status = 'available';
-          state.ui.recruitmentNeedsUpdate = true;
-      }
+      UnlockManager.checkUnlocks(state, eventBus);
       state.ui.progressionNeedsUpdate = true;
+      DungeonManager.generateNextEncounter(state, eventBus);
   });
+
+  // NOUVEAU : Écouteurs pour les effets visuels et le drag-and-drop
+  eventBus.on('hero_leveled_up', (data) => {
+      const heroCard = document.querySelector(`.hero-card[data-hero-id="${data.heroId}"]`);
+      if (heroCard) {
+          const levelEl = heroCard.querySelector('.hero-level');
+          if(levelEl) {
+              levelEl.classList.add('level-up-flash');
+              levelEl.addEventListener('animationend', () => {
+                  levelEl.classList.remove('level-up-flash');
+              }, { once: true });
+          }
+      }
+  });
+
+  eventBus.on('item_dropped_on_hero', (data) => {
+      InventoryManager.equipItemFromDrag(state, data.inventoryIndex, data.heroId, eventBus);
+  });
+
+
   eventBus.on('notification_sent', (data) => state.notifications.push(data));
   eventBus.on('ui_heroes_need_update', () => { state.ui.heroesNeedUpdate = true; });
   eventBus.on('hero_healed', (data) => {
@@ -163,7 +181,6 @@ function setupEventListeners() {
 }
 
 function getNewGameState() {
-    const heroDefinitions = JSON.parse(JSON.stringify(HERO_DEFINITIONS));
     const initialState = {
         heroes: [],
         activeMonster: null,
@@ -175,7 +192,7 @@ function getNewGameState() {
         shopItems: [],
         shopRestockTimer: 0,
         autosaveTimer: 0,
-        heroDefinitions: heroDefinitions,
+        heroDefinitions: JSON.parse(JSON.stringify(HERO_DEFINITIONS)),
         droppedItems: [],
         inventory: [],
         itemToEquip: null,
@@ -195,6 +212,7 @@ function getNewGameState() {
         notifications: [],
         floatingTexts: [],
         damageBuckets: {},
+        eventBus: eventBus, // On passe l'instance de l'eventBus à l'état
     };
 
     for (const key in initialState.heroDefinitions) {
@@ -214,7 +232,6 @@ function getNewGameState() {
             initialState.ui.heroCardState[newHero.id] = { isCollapsed: false };
         }
     }
-    // CORRECTION : On ne génère plus le monstre ici
     return initialState;
 }
 
@@ -225,6 +242,7 @@ export function initGame() {
   
   if (loadedState) {
     state = loadedState;
+    state.eventBus = eventBus; // On s'assure que l'eventBus est présent
     const heroCardState = state.ui?.heroCardState || {};
     const shopLockModeActive = state.ui?.shopLockModeActive || false;
     const autoProgressToBoss = state.ui?.autoProgressToBoss || false;
@@ -250,14 +268,15 @@ export function initGame() {
     isNewGame = true;
   }
   
-  // CORRECTION : On configure les écouteurs AVANT d'émettre le premier événement
   setupEventListeners();
   
-  // CORRECTION : On génère le premier monstre seulement maintenant
+  UnlockManager.checkUnlocks(state, eventBus);
+  
   if (isNewGame) {
       DungeonManager.generateNextEncounter(state, eventBus);
   }
 
+  // --- Setup des écouteurs d'événements du DOM ---
   document.getElementById('refresh-shop-btn').addEventListener('click', () => {
       ShopManager.clearShop(state);
   });
@@ -362,9 +381,9 @@ export function initGame() {
       }
   });
 
-  document.getElementById('reset-game-btn').addEventListener('click', StorageManager.reset);
+  document.getElementById('reset-game-btn').addEventListener('click', () => StorageManager.reset());
 
-  updateUI(state, 0);
+  updateUI(state, 0, { gold: state.gold });
 
   requestAnimationFrame(gameLoop);
 }

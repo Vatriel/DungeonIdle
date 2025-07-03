@@ -101,18 +101,28 @@ h3 { font-size: 1em; margin-top: 20px;}
 .hero-card.collapsed .hero-main-content { flex-grow: 0; width: 100%; }
 .hero-card.collapsed .hero-title { margin-bottom: 5px; }
 .hero-card.collapsed { align-items: flex-start; padding-top: 5px; padding-bottom: 5px; }
-/* --- MODIFICATION APPLIQUÉE ICI --- */
 .hero-card.collapsed .hero-controls { flex-direction: column; align-items: center; margin-left: auto; }
 
-progress { width: 80%; height: 15px; border: 1px solid #111; background-color: #444; }
-progress::-webkit-progress-bar { background-color: #444; }
-progress::-webkit-progress-value { background-color: #e53935; }
-progress::-moz-progress-bar { background-color: #e53935; }
-.hero-hp-bar { width: 100%; height: 10px; }
-.hero-xp-bar { width: 100%; height: 5px; }
-.hero-xp-bar::-webkit-progress-value { background-color: #ffd700; }
-.hero-xp-bar::-moz-progress-bar { background-color: #ffd700; }
+/* CORRIGÉ : Nouveaux styles pour les barres de progression personnalisées */
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #111;
+    margin-top: 4px;
+}
+.hero-xp-bar.progress-bar-container { height: 5px; }
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* La largeur est contrôlée par JS */
+    transition: width 0.1s linear; /* Transition douce */
+}
+.progress-bar-fill.hp { background-color: #e53935; }
+.progress-bar-fill.xp { background-color: #ffd700; }
+
 .xp-text { font-size: 0.8em; color: #ccc; margin-bottom: 2px; }
+.monster-hp-container p { margin: 8px 0 4px 0; }
 
 .hero-equipment-display { font-size: 0.85em; margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
 .equipped-item { background: #222; padding: 3px 6px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -132,11 +142,12 @@ progress::-moz-progress-bar { background-color: #e53935; }
 .rarity-rare .item-name { color: #fdd663; }
 .stat-increase { color: #4CAF50; }
 .stat-decrease { color: #F44336; }
+.stat-malus { color: #F44336; }
 
 /* --- INVENTAIRE --- */
 #inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
 .inventory-item-container { position: relative; }
-.inventory-item { width: 100%; height: 60px; border: 2px solid #666; background-color: #333; display: flex; justify-content: center; align-items: center; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+.inventory-item { width: 100%; height: 60px; border: 2px solid #666; background-color: #333; display: flex; justify-content: center; align-items: center; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
 .inventory-item:hover { transform: scale(1.1); }
 .inventory-item.rarity-magic { border-color: #8ab4f8; color: #8ab4f8; }
 .inventory-item.rarity-rare { border-color: #fdd663; color: #fdd663; }
@@ -169,16 +180,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .refresh-shop-btn:hover:not(:disabled) { transform: rotate(180deg); }
 .refresh-shop-btn:disabled { color: #888; cursor: not-allowed; text-shadow: none; }
 
-.shop-utility-btn {
-    border: none;
-    background: none;
-    color: #aaa;
-    font-size: 1.8em;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    transition: color 0.2s, text-shadow 0.2s;
-}
+.shop-utility-btn { border: none; background: none; color: #aaa; font-size: 1.8em; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s, text-shadow 0.2s; }
 .shop-utility-btn:hover { background: none; color: #ccc; }
 .shop-utility-btn.active { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); }
 
@@ -205,36 +207,31 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .notification.error { background-color: #c82333; border: 1px solid #dc3545; }
 .notification.success { background-color: #218838; border: 1px solid #28a745; }
 
-/* --- NOUVEAU : Style pour les buffs sur les cartes de héros --- */
-.buffs-container {
-    display: flex;
-    gap: 4px;
-    margin-top: 5px;
-    min-height: 24px; /* Pour éviter les sauts de layout */
+/* --- BUFFS --- */
+.buffs-container { display: flex; gap: 4px; margin-top: 5px; min-height: 24px; }
+.buff-icon { position: relative; width: 22px; height: 22px; background-color: #4f4f4f; border: 1px solid #888; border-radius: 4px; color: white; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: help; overflow: hidden; }
+.buff-duration-bar { position: absolute; bottom: 0; left: 0; height: 3px; background-color: rgba(255, 255, 255, 0.6); transition: width 0.2s linear; }
+
+/* --- Alertes visuelles et micro-interactions --- */
+.hero-card.is-low-hp { animation: pulse-red 1.5s infinite; }
+.hero-card .hero-level.level-up-flash { animation: flash-yellow 1s ease-out; }
+#player-gold.gold-pop { animation: pop 0.3s ease-out; display: inline-block; }
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.4); }
+    50% { box-shadow: 0 0 15px 3px rgba(244, 67, 54, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.4); }
+}
+@keyframes flash-yellow {
+    0% { color: #e0e0e0; text-shadow: none; }
+    25% { color: #ffd700; text-shadow: 0 0 10px #ffd700; transform: scale(1.5); }
+    100% { color: #e0e0e0; text-shadow: none; transform: scale(1); }
 }
 
-.buff-icon {
-    position: relative;
-    width: 22px;
-    height: 22px;
-    background-color: #4f4f4f;
-    border: 1px solid #888;
-    border-radius: 4px;
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: help;
-    overflow: hidden; /* Pour contenir la barre de durée */
-}
-
-.buff-duration-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background-color: rgba(255, 255, 255, 0.6);
-    transition: width 0.2s linear;
+/* --- Drag & Drop --- */
+.inventory-item.dragging { opacity: 0.5; border-style: dashed; }
+.hero-card.drag-over {
+    background-color: #4a4a4a;
+    border-color: #ffd700;
+    transform: scale(1.02);
 }

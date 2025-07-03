@@ -142,7 +142,8 @@ export class Hero {
       return unequippedItem;
   }
 
-  levelUp() {
+  // CORRIGÉ : On passe l'eventBus pour pouvoir émettre un événement
+  levelUp(eventBus) {
     this.level++;
     this.xp -= this.xpToNextLevel;
     this.baseMaxHp += this.definition.hpPerLevel;
@@ -150,6 +151,8 @@ export class Hero {
     this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
     this._recalculateStats();
     this.hp = this.maxHp;
+    // NOUVEAU : On émet un événement pour que l'UI puisse réagir
+    eventBus.emit('hero_leveled_up', { heroId: this.id });
   }
 
   addBuff(buff) {
@@ -167,7 +170,21 @@ export class Hero {
       return this.hp - oldHp;
   }
 
-  addXp(amount) { this.xp += amount; while (this.xp >= this.xpToNextLevel) { this.levelUp(); } }
-  takeDamage(amount) { if (this.status !== 'fighting') return; this.hp = Math.max(0, this.hp - amount); if (this.hp === 0) { this.status = 'recovering'; } }
+  // CORRIGÉ : On passe l'eventBus à levelUp
+  addXp(amount, eventBus) { 
+      this.xp += amount; 
+      while (this.xp >= this.xpToNextLevel) { 
+          this.levelUp(eventBus); 
+      } 
+  }
+  
+  takeDamage(amount) { 
+      if (this.status !== 'fighting') return; 
+      this.hp = Math.max(0, this.hp - amount); 
+      if (this.hp === 0) { 
+          this.status = 'recovering'; 
+      } 
+  }
+  
   isFighting() { return this.status === 'fighting'; }
 }

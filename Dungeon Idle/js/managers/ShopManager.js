@@ -2,6 +2,7 @@
 
 import { ITEM_DEFINITIONS } from '../data/itemData.js';
 import { Item } from '../entities/Item.js';
+// Cette ligne est correcte, elle attend bien une exportation nommée "InventoryManager".
 import { InventoryManager } from './InventoryManager.js';
 
 const SHOP_RESTOCK_INTERVAL = 10;

@@ -2,11 +2,6 @@
 
 const inventoryGridEl = document.getElementById('inventory-grid');
 
-/**
- * Affiche les objets de l'inventaire dans la grille.
- * @param {Array<Item>} inventory - Le tableau d'objets de l'inventaire.
- * @param {object | null} itemToEquip - L'objet actuellement sélectionné pour l'équipement.
- */
 export function renderInventory(inventory, itemToEquip) {
     if (!inventoryGridEl) return;
 
@@ -27,13 +22,27 @@ export function renderInventory(inventory, itemToEquip) {
 
         let tooltipText = `${item.name}\n`;
         for (const [stat, value] of Object.entries(item.stats)) {
-            tooltipText += `+${value} ${stat}\n`;
+            const sign = value > 0 ? '+' : '';
+            tooltipText += `${sign}${value} ${stat}\n`;
         }
         itemEl.title = tooltipText.trim();
         itemEl.textContent = item.baseDefinition.name.substring(0, 3).toUpperCase();
 
-        // On ajoute le bouton "Jeter" uniquement si on n'est pas en mode équipement
-        // pour éviter les clics accidentels.
+        // NOUVEAU : Ajout des propriétés et écouteurs pour le drag-and-drop
+        itemEl.draggable = true;
+        itemEl.addEventListener('dragstart', (event) => {
+            // On stocke l'index de l'objet dans les données du transfert
+            event.dataTransfer.setData('text/plain', index);
+            event.dataTransfer.effectAllowed = 'move';
+            // On ajoute une classe pour styliser l'objet pendant le drag
+            setTimeout(() => itemEl.classList.add('dragging'), 0);
+        });
+
+        itemEl.addEventListener('dragend', () => {
+            itemEl.classList.remove('dragging');
+        });
+
+
         if (!itemToEquip) {
             const discardBtn = document.createElement('button');
             discardBtn.className = 'item-action-btn discard-btn inventory-discard-btn';

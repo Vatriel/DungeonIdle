@@ -31,37 +31,48 @@ export class Item {
     if (this.rarity === 'magic') affixCount = Math.random() < 0.5 ? 1 : 2;
     if (this.rarity === 'rare') affixCount = Math.random() < 0.5 ? 3 : 4;
 
-    if (affixCount > 0) {
-        const availableAffixes = [...this.baseDefinition.possibleAffixes];
-        for (let i = 0; i < affixCount; i++) {
-            if (availableAffixes.length === 0) break;
-            
-            const randomIndex = Math.floor(Math.random() * availableAffixes.length);
-            const chosenAffixKey = availableAffixes.splice(randomIndex, 1)[0];
-            
-            let value = (Math.random() * 0.5 + 0.5) * this.level; 
+    const availableAffixes = [...(this.baseDefinition.possibleAffixes || [])];
+    
+    // CORRIGÉ : Logique de malus pilotée par les données
+    const malusPool = this.baseDefinition.possibleMaluses || {};
+    for (const malusKey in malusPool) {
+        const malusConfig = malusPool[malusKey];
+        
+        // On retire la clé du pool des affixes positifs possibles pour éviter un double tirage
+        const indexInPositives = availableAffixes.indexOf(malusKey);
+        if (indexInPositives > -1) {
+            availableAffixes.splice(indexInPositives, 1);
+        }
 
-            // NOUVEAU : Logique pour générer des malus
-            let isMalus = false;
-            if (this.baseDefinition.name === "Armure de plaques" && chosenAffixKey === 'dpsPercent') {
-                isMalus = true;
-            }
-            if (this.baseDefinition.name === "Bâton de guerre" && chosenAffixKey === 'armor') {
-                isMalus = true;
-            }
-
-            if (AFFIX_DEFINITIONS[chosenAffixKey].isPercent) {
+        // On tire au sort pour voir si le malus s'applique
+        if (Math.random() < malusConfig.chance) {
+            let value = (Math.random() * 0.5 + 0.5) * this.level * (malusConfig.magnitude || 1);
+            if (AFFIX_DEFINITIONS[malusKey].isPercent) {
                 value = parseFloat((value * 0.5).toFixed(2));
             } else {
                 value = Math.ceil(value * 2);
             }
-
-            if (isMalus) {
-                value = -value; // On rend la valeur négative
-            }
-
-            affixes[chosenAffixKey] = value;
+            affixes[malusKey] = -value; // Applique la valeur en négatif
         }
+    }
+
+    // On génère ensuite les affixes positifs normaux
+    for (let i = 0; i < affixCount; i++) {
+        if (availableAffixes.length === 0) break;
+        
+        const randomIndex = Math.floor(Math.random() * availableAffixes.length);
+        const chosenAffixKey = availableAffixes.splice(randomIndex, 1)[0];
+        
+        let value = (Math.random() * 0.5 + 0.5) * this.level; 
+
+        if (AFFIX_DEFINITIONS[chosenAffixKey].isPercent) {
+            value = parseFloat((value * 0.5).toFixed(2));
+        } else {
+            value = Math.ceil(value * 2);
+        }
+
+        // On ajoute la valeur (au cas où un affixe serait déjà présent, bien que peu probable ici)
+        affixes[chosenAffixKey] = (affixes[chosenAffixKey] || 0) + value;
     }
     return affixes;
   }

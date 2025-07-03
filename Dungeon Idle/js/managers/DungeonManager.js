@@ -30,14 +30,12 @@ function update(state, dt, eventBus) {
 }
 
 function runFightingLogic(state, dt, eventBus) {
-    // CORRECTION : Garde de sécurité pour s'assurer qu'il y a toujours un monstre
     if (!state.activeMonster) {
         console.warn("Aucun monstre actif, tentative d'en générer un nouveau.");
         generateNextEncounter(state, eventBus);
         return;
     }
 
-    // Si le monstre actuel est mort, on gère sa défaite et on arrête cette frame
     if (!state.activeMonster.isAlive()) {
         handleMonsterDefeated(state, eventBus);
         return;
@@ -45,12 +43,10 @@ function runFightingLogic(state, dt, eventBus) {
 
     state.ui.heroBarsNeedUpdate = true; 
 
-    // Chaque héros exécute sa propre logique de mise à jour (incluant la régénération)
     state.heroes.forEach(hero => {
         hero.update(state.heroes, dt, eventBus);
     });
     
-    // Le reste de la logique de combat...
     let totalPartyDps = 0;
     state.heroes.forEach(hero => {
         if (hero.isFighting()) {
@@ -219,7 +215,9 @@ function advanceToNextFloor(state, eventBus) {
     const newFloor = state.dungeonFloor + 1;
     eventBus.emit('floor_advanced', { newFloor: newFloor });
     
-    generateNextEncounter({ ...state, dungeonFloor: newFloor, encounterIndex: 0 }, eventBus);
+    // CORRIGÉ : La logique de génération du prochain monstre est maintenant
+    // gérée par l'écouteur d'événement 'floor_advanced' dans game.js.
+    // On retire l'appel redondant et potentiellement buggé qui était ici.
 }
 
 export const DungeonManager = {

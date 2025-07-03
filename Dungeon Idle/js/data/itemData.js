@@ -6,7 +6,7 @@ export const ITEM_DEFINITIONS = {
     name: "Épée courte",
     type: 'weapon',
     slot: 'arme',
-    subType: 'arme_dps', // NOUVEAU
+    subType: 'arme_dps',
     stat: 'dps',
     baseValue: 3,
     possibleAffixes: ['critChance', 'critDamage', 'dpsPercent'] 
@@ -15,10 +15,14 @@ export const ITEM_DEFINITIONS = {
     name: "Bâton de guerre",
     type: 'weapon',
     slot: 'arme',
-    subType: 'arme_dps', // NOUVEAU
+    subType: 'arme_dps',
     stat: 'dps',
     baseValue: 10,
-    possibleAffixes: ['critChance', 'critDamage', 'dpsPercent', 'armor'], 
+    possibleAffixes: ['critChance', 'critDamage', 'dpsPercent'], 
+    // CORRIGÉ : Logique de malus pilotée par les données
+    possibleMaluses: {
+        armor: { chance: 0.6, magnitude: 0.8 } // 60% de chance d'avoir un malus d'armure, à 80% de sa valeur normale
+    },
     classRestriction: ['mage']
   },
   
@@ -31,16 +35,18 @@ export const ITEM_DEFINITIONS = {
     baseValue: 15,
     possibleAffixes: ['armor', 'hpPercent', 'hpRegen']
   },
-  // NOUVEAU : Armure du Guerrier
   PLATE_ARMOR: {
     name: "Armure de plaques",
     type: 'armor',
     slot: 'torse',
     stat: 'armor',
     baseValue: 25,
-    // MODIFIÉ : Peut avoir un malus de DPS
-    possibleAffixes: ['hpPercent', 'hpRegen', 'dpsPercent'], 
-    classRestriction: ['warrior'] // NOUVEAU : Uniquement pour le Guerrier
+    possibleAffixes: ['hpPercent', 'hpRegen'],
+    // CORRIGÉ : Logique de malus pilotée par les données
+    possibleMaluses: {
+        dpsPercent: { chance: 0.8, magnitude: 0.5 } // 80% de chance d'avoir un malus de DPS, à 50% de sa valeur normale
+    },
+    classRestriction: ['warrior']
   },
 
   // NOUVEAU : Amulette
