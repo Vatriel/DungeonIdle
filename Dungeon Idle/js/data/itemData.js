@@ -1,25 +1,25 @@
 // js/data/itemData.js
 
 export const ITEM_DEFINITIONS = {
-  // --- ARMES ---
+  // --- ARMES DPS ---
   SHORT_SWORD: {
     name: "Épée courte",
     type: 'weapon',
     slot: 'arme',
+    subType: 'arme_dps', // NOUVEAU
     stat: 'dps',
     baseValue: 3,
     possibleAffixes: ['critChance', 'critDamage', 'dpsPercent'] 
   },
-  // NOUVEAU : Bâton du Mage
   WAR_STAFF: {
     name: "Bâton de guerre",
     type: 'weapon',
     slot: 'arme',
+    subType: 'arme_dps', // NOUVEAU
     stat: 'dps',
     baseValue: 10,
-    // MODIFIÉ : Peut avoir un malus d'armure
     possibleAffixes: ['critChance', 'critDamage', 'dpsPercent', 'armor'], 
-    classRestriction: ['mage'] // NOUVEAU : Uniquement pour le Mage
+    classRestriction: ['mage']
   },
   
   // --- ARMURES ---
@@ -52,18 +52,43 @@ export const ITEM_DEFINITIONS = {
       baseValue: 5, // +5% de base
       possibleAffixes: ['goldFind'],
       // Aucune restriction de classe
+  },
+
+  // --- NOUVEAUX OBJETS POUR LE PRÊTRE ---
+  PILGRIM_STAFF: {
+    name: "Bâton de pèlerin",
+    type: 'weapon',
+    slot: 'arme',
+    subType: 'arme_sacre', // Le sous-type qui le rend équipable par le prêtre
+    stat: 'healPower',
+    baseValue: 8,
+    possibleAffixes: ['healPercent', 'hpRegen', 'maxHp'],
+    classRestriction: ['priest']
+  },
+  HOLY_TOME: {
+    name: "Tome sacré",
+    type: 'relic',
+    slot: 'bibelot',
+    stat: 'buffPotency',
+    baseValue: 10,
+    possibleAffixes: ['buffDuration', 'healPercent'],
+    classRestriction: ['priest']
   }
 };
 
-// NOUVEAU : On définit nos affixes et comment ils fonctionnent
+// On définit nos affixes et comment ils fonctionnent
 export const AFFIX_DEFINITIONS = {
-    dpsPercent:    { text: "+X% DPS",          isPercent: true },
+    dpsPercent:    { text: "+X% DPS", isPercent: true },
     critChance:    { text: "+X% Chance Critique", isPercent: true },
     critDamage:    { text: "+X% Dégâts Critiques", isPercent: true },
-    maxHp:         { text: "+X HP",             isPercent: false },
-    hpPercent:     { text: "+X% HP",            isPercent: true },
-    armor:         { text: "+X Armure",         isPercent: false },
-    hpRegen:       { text: "+X HP/s",           isPercent: false },
-    // NOUVEAU
+    maxHp:         { text: "+X HP", isPercent: false },
+    hpPercent:     { text: "+X% HP", isPercent: true },
+    armor:         { text: "+X Armure", isPercent: false },
+    hpRegen:       { text: "+X HP/s", isPercent: false },
     goldFind:      { text: "+X% Découverte d'Or", isPercent: true },
+    // NOUVEAUX AFFIXES
+    healPower:     { text: "+X Puissance de Soin", isPercent: false },
+    healPercent:   { text: "+X% Soin", isPercent: true },
+    buffPotency:   { text: "+X% Efficacité des Buffs", isPercent: true },
+    buffDuration:  { text: "+X% Durée des Buffs", isPercent: true },
 };

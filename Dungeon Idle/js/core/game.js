@@ -1,23 +1,22 @@
 // js/core/Game.js
 
-// --- IMPORTS ---
 import { HERO_DEFINITIONS } from '../data/heroData.js';
 import { Hero } from '../entities/Hero.js';
+import { Priest } from '../entities/Priest.js';
 import { StorageManager } from '../managers/StorageManager.js';
 import { ShopManager } from '../managers/ShopManager.js';
 import { InventoryManager } from '../managers/InventoryManager.js';
 import { DungeonManager } from '../managers/DungeonManager.js';
 import { updateUI, showSavingIndicator, showSaveSuccess, hideSaveIndicator } from '../ui/UIUpdater.js';
+import { EventBus } from './EventBus.js';
 
-// --- CONSTANTES DE GAMEPLAY ---
 const PLAYER_CLICK_DAMAGE = 2;
-const AUTOSAVE_INTERVAL = 5;
+const AUTOSAVE_INTERVAL = 10;
 
-// --- ÉTAT CENTRAL DU JEU ---
 let state = {};
 let lastTime = 0;
+const eventBus = new EventBus();
 
-// --- BOUCLE DE JEU ---
 function gameLoop(currentTime) {
   if (lastTime === 0) lastTime = currentTime;
   const deltaTime = (currentTime - lastTime) / 1000;
@@ -28,15 +27,15 @@ function gameLoop(currentTime) {
 }
 
 function updateGameLogic(dt) {
-  ShopManager.update(state, dt);
-  DungeonManager.update(state, dt);
+  ShopManager.update(state, dt, eventBus);
+  DungeonManager.update(state, dt, eventBus);
 
   state.autosaveTimer += dt;
   if (state.autosaveTimer >= AUTOSAVE_INTERVAL) {
     state.autosaveTimer = 0;
     triggerSave();
   }
-  
+
   const warriorDef = state.heroDefinitions.WARRIOR;
   if (warriorDef && state.gold >= warriorDef.cost && warriorDef.status === 'locked') {
     warriorDef.status = 'available';
@@ -44,7 +43,6 @@ function updateGameLogic(dt) {
   }
 }
 
-// --- GESTION DES ACTIONS DU JOUEUR ---
 async function triggerSave() {
     showSavingIndicator();
     StorageManager.save(state);
@@ -56,7 +54,6 @@ async function triggerSave() {
 function onPlayerClick() {
   if (state.activeMonster && state.activeMonster.isAlive()) {
     state.activeMonster.takeDamage(PLAYER_CLICK_DAMAGE);
-    // MODIFIÉ : On ajoute les dégâts au "seau" correspondant
     if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, timer: 0.3 };
     state.damageBuckets.monster.damage += PLAYER_CLICK_DAMAGE;
   }
@@ -67,9 +64,19 @@ function recruitHero(heroId) {
   if (heroDef && heroDef.status === 'available' && state.gold >= heroDef.cost) {
     state.gold -= heroDef.cost;
     heroDef.status = 'recruited';
-    const newHero = new Hero(heroDef);
-    state.heroes.push(newHero);
     
+    let newHero;
+    switch(heroId) {
+        case 'priest':
+            newHero = new Priest(heroDef);
+            break;
+        default:
+            newHero = new Hero(heroDef);
+            break;
+    }
+
+    state.heroes.push(newHero);
+
     if (!state.ui.heroCardState) state.ui.heroCardState = {};
     state.ui.heroCardState[newHero.id] = { isCollapsed: false };
 
@@ -97,7 +104,64 @@ function toggleHeroCardView(heroId) {
     }
 }
 
-// --- INITIALISATION ---
+function setupEventListeners() {
+  eventBus.on('monster_defeated', (data) => {
+    state.gold += data.goldGained;
+    let needsFullUpdate = false;
+    state.heroes.forEach(hero => {
+      if (hero.isFighting()) {
+        const previousLevel = hero.level;
+        hero.addXp(data.xpGained);
+        if (hero.level > previousLevel) {
+          needsFullUpdate = true;
+        }
+      }
+    });
+    if (needsFullUpdate) state.ui.heroesNeedUpdate = true;
+    else state.ui.heroBarsNeedUpdate = true;
+  });
+
+  eventBus.on('item_dropped', (data) => InventoryManager.addDroppedItem(state, data.item));
+  eventBus.on('encounter_changed', (data) => {
+      state.gameStatus = data.newStatus;
+      state.encounterIndex = data.encounterIndex;
+      state.activeMonster = data.newMonster;
+      state.ui.progressionNeedsUpdate = true;
+  });
+  eventBus.on('dungeon_state_changed', (data) => {
+      state.gameStatus = data.newStatus;
+      state.ui.progressionNeedsUpdate = true;
+      if (data.fullHeal) {
+          state.heroes.forEach(hero => {
+              hero.hp = hero.maxHp;
+              hero.status = 'fighting';
+          });
+          state.ui.heroesNeedUpdate = true;
+      }
+  });
+  eventBus.on('floor_advanced', (data) => {
+      state.dungeonFloor = data.newFloor;
+      state.encounterIndex = 1;
+      state.gameStatus = 'fighting';
+      const mageDef = state.heroDefinitions.MAGE;
+      if (state.dungeonFloor === 2 && mageDef.status === 'locked') {
+          mageDef.status = 'available';
+          state.ui.recruitmentNeedsUpdate = true;
+      }
+      const priestDef = state.heroDefinitions.PRIEST;
+      if (data.newFloor === 11 && priestDef.status === 'locked') {
+          priestDef.status = 'available';
+          state.ui.recruitmentNeedsUpdate = true;
+      }
+      state.ui.progressionNeedsUpdate = true;
+  });
+  eventBus.on('notification_sent', (data) => state.notifications.push(data));
+  eventBus.on('ui_heroes_need_update', () => { state.ui.heroesNeedUpdate = true; });
+  eventBus.on('hero_healed', (data) => {
+    state.floatingTexts.push({ text: data.amount, type: 'heal', targetId: data.targetId });
+  });
+}
+
 function getNewGameState() {
     const heroDefinitions = JSON.parse(JSON.stringify(HERO_DEFINITIONS));
     const initialState = {
@@ -130,23 +194,35 @@ function getNewGameState() {
         },
         notifications: [],
         floatingTexts: [],
-        damageBuckets: {}, // NOUVEAU
+        damageBuckets: {},
     };
 
     for (const key in initialState.heroDefinitions) {
-        if (initialState.heroDefinitions[key].status === 'recruited') {
-            const newHero = new Hero(initialState.heroDefinitions[key]);
+        const heroDef = initialState.heroDefinitions[key];
+        if (heroDef.status === 'recruited') {
+            let newHero;
+            switch(heroDef.id) {
+                case 'priest':
+                    newHero = new Priest(heroDef);
+                    break;
+                default:
+                    newHero = new Hero(heroDef);
+                    break;
+            }
             initialState.heroes.push(newHero);
+            if (!initialState.ui.heroCardState) initialState.ui.heroCardState = {};
             initialState.ui.heroCardState[newHero.id] = { isCollapsed: false };
         }
     }
-    DungeonManager.generateNextEncounter(initialState);
+    // CORRECTION : On ne génère plus le monstre ici
     return initialState;
 }
 
 
 export function initGame() {
   const loadedState = StorageManager.load();
+  let isNewGame = false;
+  
   if (loadedState) {
     state = loadedState;
     const heroCardState = state.ui?.heroCardState || {};
@@ -168,12 +244,20 @@ export function initGame() {
     };
     state.notifications = state.notifications || [];
     state.floatingTexts = [];
-    state.damageBuckets = {}; // NOUVEAU
+    state.damageBuckets = {};
   } else {
     state = getNewGameState();
+    isNewGame = true;
   }
   
-  // --- SETUP DES ÉCOUTEURS D'ÉVÉNEMENTS ---
+  // CORRECTION : On configure les écouteurs AVANT d'émettre le premier événement
+  setupEventListeners();
+  
+  // CORRECTION : On génère le premier monstre seulement maintenant
+  if (isNewGame) {
+      DungeonManager.generateNextEncounter(state, eventBus);
+  }
+
   document.getElementById('refresh-shop-btn').addEventListener('click', () => {
       ShopManager.clearShop(state);
   });
@@ -200,14 +284,14 @@ export function initGame() {
 
     const buyButton = event.target.closest('.buy-btn');
     if (buyButton) {
-      ShopManager.buyItem(state, parseInt(buyButton.dataset.itemIndex, 10));
+      ShopManager.buyItem(state, parseInt(buyButton.dataset.itemIndex, 10), eventBus);
     }
   });
 
   document.getElementById('enemy-panel').addEventListener('click', (event) => {
     const target = event.target;
     if (target.matches('.pickup-btn')) {
-        InventoryManager.pickupItem(state, parseInt(target.dataset.lootIndex, 10));
+        InventoryManager.pickupItem(state, parseInt(target.dataset.lootIndex, 10), eventBus);
     } else if (target.matches('.discard-btn')) {
         InventoryManager.discardLootItem(state, parseInt(target.dataset.lootIndex, 10));
     } else if (!target.closest('.item-card')) {
@@ -219,8 +303,8 @@ export function initGame() {
     if (button) recruitHero(button.dataset.heroId);
   });
   document.getElementById('progression-controls').addEventListener('click', (event) => {
-    if (event.target.id === 'fight-boss-btn') DungeonManager.startBossFight(state);
-    else if (event.target.id === 'next-floor-btn') DungeonManager.advanceToNextFloor(state);
+    if (event.target.id === 'fight-boss-btn') DungeonManager.startBossFight(state, eventBus);
+    else if (event.target.id === 'next-floor-btn') DungeonManager.advanceToNextFloor(state, eventBus);
   });
 
   document.getElementById('auto-progression-controls').addEventListener('change', (event) => {
@@ -244,7 +328,7 @@ export function initGame() {
     if (target.matches('.unequip-btn')) {
         const { heroId, slot } = target.dataset;
         const hero = state.heroes.find(h => h.id === heroId);
-        if (hero) InventoryManager.unequipItemFromHero(state, hero, slot);
+        if (hero) InventoryManager.unequipItemFromHero(state, hero, slot, eventBus);
         return;
     }
 
@@ -252,7 +336,7 @@ export function initGame() {
         const heroCard = target.closest('.hero-card');
         if (heroCard) {
             const hero = state.heroes.find(h => h.id === heroCard.dataset.heroId);
-            if (hero) InventoryManager.equipItemOnHero(state, hero);
+            if (hero) InventoryManager.equipItemOnHero(state, hero, eventBus);
         } else {
             InventoryManager.cancelEquip(state);
         }

@@ -83,7 +83,7 @@ h3 { font-size: 1em; margin-top: 20px;}
     justify-content: space-between;
     align-items: baseline;
     position: relative;
-    padding-right: 35px; /* MODIFIÉ : Augmentation de l'espacement */
+    padding-right: 35px;
 }
 .hero-main-content { flex-grow: 1; }
 .hero-stats { font-size: 0.9em; margin: 4px 0; color: #ddd; }
@@ -101,8 +101,8 @@ h3 { font-size: 1em; margin-top: 20px;}
 .hero-card.collapsed .hero-main-content { flex-grow: 0; width: 100%; }
 .hero-card.collapsed .hero-title { margin-bottom: 5px; }
 .hero-card.collapsed { align-items: flex-start; padding-top: 5px; padding-bottom: 5px; }
-.hero-card.collapsed .hero-controls { flex-direction: row; align-items: center; margin-left: auto; }
-.hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; }
+/* --- MODIFICATION APPLIQUÉE ICI --- */
+.hero-card.collapsed .hero-controls { flex-direction: column; align-items: center; margin-left: auto; }
 
 progress { width: 80%; height: 15px; border: 1px solid #111; background-color: #444; }
 progress::-webkit-progress-bar { background-color: #444; }
@@ -151,9 +151,8 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .item-action-btn { padding: 8px 12px; }
 
 .move-hero-btn { font-size: 1.2em; padding: 2px 8px; margin: 2px 0; }
-.hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; } /* MODIFIÉ */
-
-.toggle-view-btn { position: absolute; top: 0; right: 0; font-size: 1em; padding: 0 5px; } /* MODIFIÉ */
+.hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; }
+.toggle-view-btn { position: absolute; top: 0; right: 0; font-size: 1em; padding: 0 5px; }
 
 .buy-btn { background-color: #ffd700; color: #1a1a1a; }
 .buy-btn:hover { background-color: #ffec80; }
@@ -174,14 +173,14 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
     border: none;
     background: none;
     color: #aaa;
-    font-size: 1.8em; /* MODIFIÉ */
+    font-size: 1.8em;
     cursor: pointer;
     padding: 0;
     line-height: 1;
     transition: color 0.2s, text-shadow 0.2s;
 }
 .shop-utility-btn:hover { background: none; color: #ccc; }
-.shop-utility-btn.active { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); } /* MODIFIÉ */
+.shop-utility-btn.active { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); }
 
 /* --- ÉLÉMENTS D'INTERFACE (UI flottante) --- */
 #floating-text-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5000; }
@@ -189,10 +188,10 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .floating-text.damage { color: #ff4d4d; }
 .floating-text.crit { color: #ffc107; font-size: 1.5em; }
 .floating-text.heal { color: #4CAF50; }
-.floating-text.pop { animation: pop 0.2s ease-out; } /* NOUVEAU */
+.floating-text.pop { animation: pop 0.2s ease-out; }
 
 @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
-@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } } /* NOUVEAU */
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
 #game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; }
 #save-indicator { position: fixed; top: 15px; right: 20px; background-color: #282c34; color: white; padding: 8px 15px; border-radius: 5px; border: 1px solid #61dafb; display: flex; align-items: center; font-size: 1em; opacity: 1; transition: opacity 0.5s ease-in-out; z-index: 1000; }
@@ -205,3 +204,37 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .notification.show { opacity: 1; transform: translateY(0); }
 .notification.error { background-color: #c82333; border: 1px solid #dc3545; }
 .notification.success { background-color: #218838; border: 1px solid #28a745; }
+
+/* --- NOUVEAU : Style pour les buffs sur les cartes de héros --- */
+.buffs-container {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+    min-height: 24px; /* Pour éviter les sauts de layout */
+}
+
+.buff-icon {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    background-color: #4f4f4f;
+    border: 1px solid #888;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    overflow: hidden; /* Pour contenir la barre de durée */
+}
+
+.buff-duration-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.6);
+    transition: width 0.2s linear;
+}

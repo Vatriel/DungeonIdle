@@ -4,10 +4,8 @@ import { AFFIX_DEFINITIONS } from '../data/itemData.js';
 import { MonsterGroup } from '../entities/MonsterGroup.js';
 import { renderInventory } from './InventoryUI.js';
 
-// --- CONSTANTES ---
 const BUCKET_FLUSH_INTERVAL = 0.3; 
 
-// --- RÉCUPÉRATION DES ÉLÉMENTS DU DOM ---
 const monsterNameEl = document.getElementById('monster-name');
 const monsterHpBarEl = document.getElementById('monster-hp-bar');
 const heroesAreaEl = document.getElementById('heroes-area');
@@ -24,8 +22,21 @@ const saveIndicatorEl = document.getElementById('save-indicator');
 const lootAreaEl = document.getElementById('loot-area');
 const floatingTextContainerEl = document.getElementById('floating-text-container');
 
+function createElement(tag, options = {}) {
+    const el = document.createElement(tag);
+    if (options.className) el.className = options.className;
+    if (options.textContent) el.textContent = options.textContent;
+    if (options.title) el.title = options.title;
+    if (options.value !== undefined) el.value = options.value;
+    if (options.max !== undefined) el.max = options.max;
+    if (options.dataset) {
+        for (const key in options.dataset) {
+            el.dataset[key] = options.dataset[key];
+        }
+    }
+    return el;
+}
 
-// --- FONCTION DE NOTIFICATION ---
 function showNotification(message, type = 'error') {
     let area = document.getElementById('notification-area');
     if (!area) {
@@ -33,9 +44,7 @@ function showNotification(message, type = 'error') {
         area.id = 'notification-area';
         document.body.appendChild(area);
     }
-    const notif = document.createElement('div');
-    notif.className = `notification ${type}`;
-    notif.textContent = message;
+    const notif = createElement('div', { className: `notification ${type}`, textContent: message });
     area.appendChild(notif);
     requestAnimationFrame(() => { notif.classList.add('show'); });
     setTimeout(() => {
@@ -44,12 +53,11 @@ function showNotification(message, type = 'error') {
     }, 3000);
 }
 
-
-// --- SYSTÈME DE TEXTE DE COMBAT ---
 function createFloatingText(text, type, targetElement) {
-    const textEl = document.createElement('div');
-    textEl.className = `floating-text ${type}`;
-    textEl.textContent = Math.ceil(text);
+    const textEl = createElement('div', {
+        className: `floating-text ${type}`,
+        textContent: Math.ceil(text)
+    });
 
     const rect = targetElement.getBoundingClientRect();
     const xOffset = rect.width * (0.2 + Math.random() * 0.6);
@@ -72,16 +80,14 @@ function flushDamageBuckets(state, dt) {
                 : document.querySelector(`.hero-card[data-hero-id="${targetId}"]`);
             
             if (targetElement) {
-                if (bucket.damage > 0) {
-                    createFloatingText(bucket.damage, 'damage', targetElement);
-                }
-                if (bucket.crit > 0) {
-                    createFloatingText(bucket.crit, 'crit', targetElement);
-                }
+                if (bucket.damage > 0) createFloatingText(bucket.damage, 'damage', targetElement);
+                if (bucket.crit > 0) createFloatingText(bucket.crit, 'crit', targetElement);
+                if (bucket.heal > 0) createFloatingText(bucket.heal, 'heal', targetElement);
             }
             
             bucket.damage = 0;
             bucket.crit = 0;
+            bucket.heal = 0;
             bucket.timer = BUCKET_FLUSH_INTERVAL;
         }
     }
@@ -103,19 +109,15 @@ function handleSpamTexts(state) {
     state.floatingTexts = [];
 }
 
-
-// --- FONCTIONS DE RENDU SPÉCIFIQUES ---
 function updateHeroBars(heroes) {
     heroes.forEach(hero => {
         const card = heroesAreaEl.querySelector(`.hero-card[data-hero-id="${hero.id}"]`);
         if (!card) return;
-
         const hpBar = card.querySelector('.hero-hp-bar');
         if (hpBar) {
             hpBar.value = hero.hp;
             hpBar.max = hero.maxHp;
         }
-
         const xpBar = card.querySelector('.hero-xp-bar');
         if (xpBar) {
             xpBar.value = hero.xp;
@@ -141,103 +143,198 @@ function updateMonsterUI(monster) {
   monsterHpBarEl.value = monster.currentHp;
 }
 
-function renderEquippedItem(hero, slot) {
-    const item = hero.equipment[slot];
-    const slotName = slot.charAt(0).toUpperCase() + slot.slice(1);
-    if (!item) {
-        return `<span>${slotName}: Aucun</span>`;
+function renderStatLine(label, baseValue, change, isPercent = false) {
+    const displayValue = isPercent ? (baseValue * 100).toFixed(1) + '%' : Math.ceil(baseValue);
+    const p = createElement('p', { className: 'hero-stats', textContent: `${label}: ${displayValue}` });
+
+    if (change !== 0 && change !== undefined) {
+        const newValue = baseValue + change;
+        const changeSign = change > 0 ? '+' : '';
+        const changeClass = change > 0 ? 'stat-increase' : 'stat-decrease';
+        const changeDisplay = isPercent ? (change * 100).toFixed(1) + '%' : Math.round(change);
+        const newDisplayValue = isPercent ? (newValue * 100).toFixed(1) + '%' : Math.ceil(newValue);
+
+        p.innerHTML = '';
+        p.appendChild(document.createTextNode(`${label}: `));
+        const span = createElement('span', {
+            className: changeClass,
+            textContent: `${newDisplayValue} (${changeSign}${changeDisplay})`
+        });
+        p.appendChild(span);
     }
-    return `
-        <div class="equipped-item rarity-${item.rarity}">
-            <span>${slotName}: ${item.name}</span>
-            <button class="unequip-btn" data-hero-id="${hero.id}" data-slot="${slot}" title="Déséquiper">X</button>
-        </div>
-    `;
+    return p;
 }
 
-function renderStatLine(label, baseValue, change, isPercent) {
-    const displayValue = isPercent ? (baseValue * 100).toFixed(1) + '%' : Math.ceil(baseValue);
-    if (change === 0 || change === undefined) {
-        return `<p class="hero-stats">${label}: ${displayValue}</p>`;
-    }
-    
-    const newValue = baseValue + change;
-    const changeSign = change > 0 ? '+' : '';
-    const changeClass = change > 0 ? 'stat-increase' : 'stat-decrease';
-    const changeDisplay = isPercent ? (change * 100).toFixed(1) + '%' : Math.round(change);
-    const newDisplayValue = isPercent ? (newValue * 100).toFixed(1) + '%' : Math.ceil(newValue);
+function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip) {
+    const card = createElement('div', { className: 'hero-card', dataset: { heroId: hero.id } });
+    if (isCollapsed) card.classList.add('collapsed');
+    if (hero.status === 'recovering') card.classList.add('recovering');
+    if (itemToEquip) card.classList.add('equip-mode');
 
-    return `<p class="hero-stats">${label}: <span class="${changeClass}">${newDisplayValue} (${changeSign}${changeDisplay})</span></p>`;
+    const mainContent = createElement('div', { className: 'hero-main-content' });
+    const controls = createElement('div', { className: 'hero-controls' });
+
+    const titleDiv = createElement('div', { className: 'hero-title' });
+    titleDiv.appendChild(createElement('strong', { className: 'hero-name', textContent: hero.name }));
+    titleDiv.appendChild(createElement('span', { className: 'hero-level', textContent: `Niveau ${hero.level}` }));
+    titleDiv.appendChild(createElement('button', { className: 'toggle-view-btn', textContent: isCollapsed ? '+' : '-', dataset: { heroId: hero.id } }));
+    mainContent.appendChild(titleDiv);
+    
+    const collapsedInfo = createElement('div', { className: 'collapsed-info' });
+    collapsedInfo.appendChild(createElement('p', { className: 'hero-stats', textContent: `DPS: ${hero.dps.toFixed(1)}` }));
+    mainContent.appendChild(collapsedInfo);
+
+    const statsGrid = createElement('div', { className: 'hero-stats-grid' });
+    if (itemToEquip && hero.equipment[itemToEquip.baseDefinition.slot] !== undefined) {
+        const changes = hero.calculateStatChanges(itemToEquip);
+        const currentStats = hero.getAllStats();
+        statsGrid.appendChild(renderStatLine('DPS', currentStats.dps, changes.dps));
+        statsGrid.appendChild(renderStatLine('HP', currentStats.maxHp, changes.maxHp));
+        statsGrid.appendChild(renderStatLine('Armure', currentStats.armor, changes.armor));
+        statsGrid.appendChild(renderStatLine('Crit', currentStats.critChance, changes.critChance, true));
+        statsGrid.appendChild(renderStatLine('HP/s', currentStats.hpRegen, changes.hpRegen));
+    } else {
+        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `DPS: ${hero.dps.toFixed(1)}` }));
+        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}` }));
+        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `Armure: ${hero.armor}` }));
+        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `Crit: ${(hero.critChance * 100).toFixed(1)}%` }));
+        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `HP/s: ${hero.hpRegen.toFixed(1)}` }));
+    }
+    mainContent.appendChild(statsGrid);
+
+    mainContent.appendChild(createElement('progress', { className: 'hero-hp-bar', value: hero.hp, max: hero.maxHp }));
+    
+    const buffsContainer = createElement('div', { className: 'buffs-container' });
+    if (hero.activeBuffs) {
+        hero.activeBuffs.forEach(buff => {
+            const buffIcon = createElement('div', {
+                className: 'buff-icon',
+                textContent: buff.name.substring(0, 1),
+                title: `${buff.name}: +${buff.value.toFixed(1)}${buff.stat.includes('Percent') ? '%' : ''} (${buff.duration.toFixed(0)}s)`
+            });
+            const buffBar = createElement('div', {className: 'buff-duration-bar'});
+            buffBar.style.width = `${(buff.duration / buff.maxDuration) * 100}%`;
+            buffIcon.appendChild(buffBar);
+            buffsContainer.appendChild(buffIcon);
+        });
+    }
+    mainContent.appendChild(buffsContainer);
+
+    mainContent.appendChild(createElement('p', { className: 'hero-stats xp-text', textContent: `${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP` }));
+    mainContent.appendChild(createElement('progress', { className: 'hero-xp-bar', value: hero.xp, max: hero.xpToNextLevel }));
+
+    const equipmentDisplay = createElement('div', { className: 'hero-equipment-display' });
+    const equipmentSlots = ['arme', 'torse', 'tete', 'jambes', 'mains', 'pieds', 'amulette', 'anneau1', 'anneau2', 'bibelot'];
+    equipmentSlots.forEach(slot => {
+        const item = hero.equipment[slot];
+        const slotName = slot.charAt(0).toUpperCase() + slot.slice(1);
+        const itemDiv = createElement('div', { className: 'equipped-item' });
+        if (item) {
+            itemDiv.classList.add(`rarity-${item.rarity}`);
+            itemDiv.appendChild(createElement('span', { textContent: `${slotName}: ${item.name}` }));
+            itemDiv.appendChild(createElement('button', { className: 'unequip-btn', textContent: 'X', title: 'Déséquiper', dataset: { heroId: hero.id, slot: slot } }));
+        } else {
+            itemDiv.appendChild(createElement('span', { textContent: `${slotName}: Aucun` }));
+        }
+        equipmentDisplay.appendChild(itemDiv);
+    });
+    mainContent.appendChild(equipmentDisplay);
+
+    if (index > 0) {
+        controls.appendChild(createElement('button', { className: 'move-hero-btn up', title: 'Monter', textContent: '▲', dataset: { heroId: hero.id, direction: 'up' } }));
+    } else {
+        controls.appendChild(createElement('div', { className: 'move-placeholder' }));
+    }
+    if (index < heroesCount - 1) {
+        controls.appendChild(createElement('button', { className: 'move-hero-btn down', title: 'Descendre', textContent: '▼', dataset: { heroId: hero.id, direction: 'down' } }));
+    } else {
+        controls.appendChild(createElement('div', { className: 'move-placeholder' }));
+    }
+
+    card.appendChild(mainContent);
+    card.appendChild(controls);
+    return card;
 }
 
 function updateHeroesUI(heroes, itemToEquip, heroCardState) {
   heroesAreaEl.innerHTML = '';
   heroes.forEach((hero, index) => {
-    const card = document.createElement('div');
-    card.className = 'hero-card';
-    card.dataset.heroId = hero.id;
-
     const isCollapsed = heroCardState[hero.id] ? heroCardState[hero.id].isCollapsed : false;
-    if (isCollapsed) {
-        card.classList.add('collapsed');
-    }
-
-    let statsHtml;
-    if (itemToEquip && hero.equipment[itemToEquip.baseDefinition.slot] !== undefined) {
-        const changes = hero.calculateStatChanges(itemToEquip);
-        const currentStats = hero.getAllStats();
-        statsHtml = `
-            ${renderStatLine('DPS', currentStats.dps, changes.dps)}
-            ${renderStatLine('HP', currentStats.maxHp, changes.maxHp)}
-            ${renderStatLine('Armure', currentStats.armor, changes.armor)}
-            ${renderStatLine('Crit', currentStats.critChance, changes.critChance, true)}
-            ${renderStatLine('HP/s', currentStats.hpRegen, changes.hpRegen)}
-        `;
-    } else {
-        statsHtml = `
-            <p class="hero-stats">DPS: ${hero.dps.toFixed(1)}</p>
-            <p class="hero-stats">HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}</p>
-            <p class="hero-stats">Armure: ${hero.armor}</p>
-            <p class="hero-stats">Crit: ${(hero.critChance * 100).toFixed(1)}%</p>
-            <p class="hero-stats">HP/s: ${hero.hpRegen.toFixed(1)}</p>
-        `;
-    }
-    
-    const equipmentSlots = ['arme', 'torse', 'tete', 'jambes', 'mains', 'pieds', 'amulette', 'anneau1', 'anneau2', 'bibelot'];
-    const equipmentHtml = equipmentSlots.map(slot => renderEquippedItem(hero, slot)).join('');
-
-    const toggleButtonText = isCollapsed ? '+' : '-';
-
-    card.innerHTML = `
-        <div class="hero-main-content">
-          <div class="hero-title">
-            <strong class="hero-name">${hero.name}</strong>
-            <span class="hero-level">Niveau ${hero.level}</span>
-            <button class="toggle-view-btn" data-hero-id="${hero.id}">${toggleButtonText}</button>
-          </div>
-          <div class="collapsed-info">
-            <p class="hero-stats">DPS: ${hero.dps.toFixed(1)}</p>
-          </div>
-          <div class="hero-stats-grid">
-            ${statsHtml}
-          </div>
-          <progress class="hero-hp-bar" value="${hero.hp}" max="${hero.maxHp}"></progress>
-          <p class="hero-stats xp-text">${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP</p>
-          <progress class="hero-xp-bar" value="${hero.xp}" max="${hero.xpToNextLevel}"></progress>
-          <div class="hero-equipment-display">
-            ${equipmentHtml}
-          </div>
-        </div>
-        <div class="hero-controls">
-          ${index > 0 ? `<button class="move-hero-btn up" title="Monter" data-hero-id="${hero.id}" data-direction="up">▲</button>` : `<div class="move-placeholder"></div>`}
-          ${index < heroes.length - 1 ? `<button class="move-hero-btn down" title="Descendre" data-hero-id="${hero.id}" data-direction="down">▼</button>` : `<div class="move-placeholder"></div>`}
-        </div>
-    `;
-    
-    card.classList.toggle('recovering', hero.status === 'recovering');
-    card.classList.toggle('equip-mode', !!itemToEquip);
+    const card = createHeroCard(hero, index, heroes.length, isCollapsed, itemToEquip);
     heroesAreaEl.appendChild(card);
   });
+}
+
+function createShopItemCard(item, index) {
+    const itemCard = createElement('div', { className: `shop-item-card rarity-${item.rarity}` });
+    if (item.isLocked) itemCard.classList.add('locked');
+
+    const itemInfo = createElement('div', { className: 'item-info' });
+    itemInfo.appendChild(createElement('p', { className: 'item-name', textContent: item.name }));
+    const primaryStatValue = item.stats[item.baseDefinition.stat];
+    const primaryStatName = item.baseDefinition.stat;
+    itemInfo.appendChild(createElement('p', { className: 'item-stats', textContent: `+${primaryStatValue} ${primaryStatName}` }));
+
+    Object.entries(item.stats).forEach(([stat, value]) => {
+        if (stat === item.baseDefinition.stat) return;
+        const affixInfo = AFFIX_DEFINITIONS[stat];
+        if (!affixInfo) return;
+        const text = affixInfo.text.replace('X', value > 0 ? value : -value);
+        const sign = value > 0 ? '+' : '-';
+        itemInfo.appendChild(createElement('p', { className: 'item-affix', textContent: `${sign}${text.substring(1)}` }));
+    });
+
+    const itemActions = createElement('div', { className: 'item-actions' });
+    itemActions.appendChild(createElement('button', { className: 'item-action-btn buy-btn', textContent: `${item.cost} Or`, dataset: { itemIndex: index } }));
+    
+    itemCard.appendChild(itemInfo);
+    itemCard.appendChild(itemActions);
+    return itemCard;
+}
+
+function updateShopUI(shopItems) {
+    shopAreaEl.innerHTML = '';
+    if (!shopItems) return;
+    shopItems.forEach((item, index) => {
+        const itemCard = createShopItemCard(item, index);
+        shopAreaEl.appendChild(itemCard);
+    });
+}
+
+function createLootItemCard(item, index) {
+    const itemCard = createElement('div', { className: `loot-item-card rarity-${item.rarity}` });
+
+    const itemInfo = createElement('div', { className: 'item-info' });
+    itemInfo.appendChild(createElement('p', { className: 'item-name', textContent: item.name }));
+    const primaryStatValue = item.stats[item.baseDefinition.stat];
+    const primaryStatName = item.baseDefinition.stat;
+    itemInfo.appendChild(createElement('p', { className: 'item-stats', textContent: `+${primaryStatValue} ${primaryStatName}` }));
+
+    Object.entries(item.stats).forEach(([stat, value]) => {
+        if (stat === item.baseDefinition.stat) return;
+        const affixInfo = AFFIX_DEFINITIONS[stat];
+        if (!affixInfo) return;
+        const text = affixInfo.text.replace('X', value > 0 ? value : -value);
+        const sign = value > 0 ? '+' : '-';
+        itemInfo.appendChild(createElement('p', { className: 'item-affix', textContent: `${sign}${text.substring(1)}` }));
+    });
+
+    const itemActions = createElement('div', { className: 'item-actions' });
+    itemActions.appendChild(createElement('button', { className: 'item-action-btn pickup-btn', textContent: 'Ramasser', dataset: { lootIndex: index } }));
+    itemActions.appendChild(createElement('button', { className: 'item-action-btn discard-btn', textContent: 'Jeter', title: 'Jeter', dataset: { lootIndex: index } }));
+
+    itemCard.appendChild(itemInfo);
+    itemCard.appendChild(itemActions);
+    return itemCard;
+}
+
+function updateLootUI(droppedItems) {
+    lootAreaEl.innerHTML = '';
+    if (!droppedItems) return;
+    droppedItems.forEach((item, index) => {
+        const itemCard = createLootItemCard(item, index);
+        lootAreaEl.appendChild(itemCard);
+    });
 }
 
 function updateGoldUI(state) {
@@ -267,77 +364,6 @@ function updateDungeonUI(floor, encounter, maxEncounters, gameStatus) {
   }
 }
 
-function updateShopUI(shopItems) {
-    shopAreaEl.innerHTML = '';
-    if (!shopItems) return;
-    shopItems.forEach((item, index) => {
-        const itemCard = document.createElement('div');
-        itemCard.className = `shop-item-card rarity-${item.rarity}`;
-        if (item.isLocked) {
-            itemCard.classList.add('locked');
-        }
-
-        let affixesHtml = Object.entries(item.stats).map(([stat, value]) => {
-            if (stat === item.baseDefinition.stat) return '';
-            const affixInfo = AFFIX_DEFINITIONS[stat];
-            if (!affixInfo) return '';
-            const text = affixInfo.text.replace('X', value > 0 ? value : -value);
-            const sign = value > 0 ? '+' : '-';
-            return `<p class="item-affix">${sign}${text.substring(1)}</p>`;
-        }).join('');
-
-        const primaryStatValue = item.stats[item.baseDefinition.stat];
-        const primaryStatName = item.baseDefinition.stat;
-
-        itemCard.innerHTML = `
-            <div class="item-info">
-                <p class="item-name">${item.name}</p>
-                <p class="item-stats">+${primaryStatValue} ${primaryStatName}</p>
-                ${affixesHtml}
-            </div>
-            <div class="item-actions">
-                 <button class="item-action-btn buy-btn" data-item-index="${index}">${item.cost} Or</button>
-            </div>
-        `;
-        shopAreaEl.appendChild(itemCard);
-    });
-}
-
-function updateLootUI(droppedItems) {
-    lootAreaEl.innerHTML = '';
-    if (!droppedItems) return;
-
-    droppedItems.forEach((item, index) => {
-        const itemCard = document.createElement('div');
-        itemCard.className = `loot-item-card rarity-${item.rarity}`;
-        
-        let affixesHtml = Object.entries(item.stats).map(([stat, value]) => {
-            if (stat === item.baseDefinition.stat) return '';
-            const affixInfo = AFFIX_DEFINITIONS[stat];
-            if (!affixInfo) return '';
-            const text = affixInfo.text.replace('X', value > 0 ? value : -value);
-            const sign = value > 0 ? '+' : '-';
-            return `<p class="item-affix">${sign}${text.substring(1)}</p>`;
-        }).join('');
-
-        const primaryStatValue = item.stats[item.baseDefinition.stat];
-        const primaryStatName = item.baseDefinition.stat;
-
-        itemCard.innerHTML = `
-            <div class="item-info">
-                <p class="item-name">${item.name}</p>
-                <p class="item-stats">+${primaryStatValue} ${primaryStatName}</p>
-                ${affixesHtml}
-            </div>
-            <div class="item-actions">
-                <button class="item-action-btn pickup-btn" data-loot-index="${index}">Ramasser</button>
-                <button class="item-action-btn discard-btn" data-loot-index="${index}" title="Jeter">Jeter</button>
-            </div>
-        `;
-        lootAreaEl.appendChild(itemCard);
-    });
-}
-
 function renderRecruitmentArea(heroDefinitions) {
   recruitmentAreaEl.innerHTML = '';
   const availableHeroes = Object.values(heroDefinitions).filter(def => def.status === 'available');
@@ -345,10 +371,10 @@ function renderRecruitmentArea(heroDefinitions) {
   if (availableHeroes.length > 0) {
     recruitmentSectionEl.classList.remove('hidden');
     availableHeroes.forEach(heroDef => {
-        const button = document.createElement('button');
-        const costText = heroDef.cost > 0 ? `${heroDef.cost} Or` : 'Gratuit';
-        button.textContent = `Recruter ${heroDef.name} (${costText})`;
-        button.dataset.heroId = heroDef.id;
+        const button = createElement('button', {
+            textContent: `Recruter ${heroDef.name} (${heroDef.cost > 0 ? `${heroDef.cost} Or` : 'Gratuit'})`,
+            dataset: { heroId: heroDef.id }
+        });
         recruitmentAreaEl.appendChild(button);
     });
   } else {
@@ -356,32 +382,37 @@ function renderRecruitmentArea(heroDefinitions) {
   }
 }
 
+// --- CORRECTION APPLIQUÉE ICI ---
 function updateProgressionUI(state) {
   progressionControlsEl.innerHTML = '';
   if (state.gameStatus === 'farming_boss_available') {
-    const bossButton = document.createElement('button');
-    bossButton.id = 'fight-boss-btn';
-    bossButton.textContent = 'Affronter le Boss';
+    const bossButton = createElement('button', { textContent: 'Affronter le Boss' });
+    bossButton.id = 'fight-boss-btn'; // On assigne l'ID manuellement
     progressionControlsEl.appendChild(bossButton);
   } else if (state.gameStatus === 'floor_cleared') {
-    const nextFloorButton = document.createElement('button');
-    nextFloorButton.id = 'next-floor-btn';
-    nextFloorButton.textContent = 'Étage Suivant';
+    const nextFloorButton = createElement('button', { textContent: 'Étage Suivant' });
+    nextFloorButton.id = 'next-floor-btn'; // On assigne l'ID manuellement
     progressionControlsEl.appendChild(nextFloorButton);
   }
 
   autoProgressionControlsEl.innerHTML = '';
   
-  const autoBossLabel = document.createElement('label');
-  autoBossLabel.className = 'auto-control-label';
-  autoBossLabel.innerHTML = `<input type="checkbox" id="auto-boss-checkbox"> Passer au boss`;
-  autoBossLabel.querySelector('input').checked = state.ui.autoProgressToBoss;
+  const autoBossLabel = createElement('label', { className: 'auto-control-label' });
+  const autoBossCheckbox = createElement('input');
+  autoBossCheckbox.type = 'checkbox';
+  autoBossCheckbox.id = 'auto-boss-checkbox';
+  autoBossCheckbox.checked = state.ui.autoProgressToBoss;
+  autoBossLabel.appendChild(autoBossCheckbox);
+  autoBossLabel.appendChild(document.createTextNode(' Passer au boss'));
   autoProgressionControlsEl.appendChild(autoBossLabel);
 
-  const autoFloorLabel = document.createElement('label');
-  autoFloorLabel.className = 'auto-control-label';
-  autoFloorLabel.innerHTML = `<input type="checkbox" id="auto-floor-checkbox"> Passer à l'étage suivant`;
-  autoFloorLabel.querySelector('input').checked = state.ui.autoProgressToNextFloor;
+  const autoFloorLabel = createElement('label', { className: 'auto-control-label' });
+  const autoFloorCheckbox = createElement('input');
+  autoFloorCheckbox.type = 'checkbox';
+  autoFloorCheckbox.id = 'auto-floor-checkbox';
+  autoFloorCheckbox.checked = state.ui.autoProgressToNextFloor;
+  autoFloorLabel.appendChild(autoFloorCheckbox);
+  autoFloorLabel.appendChild(document.createTextNode(" Passer à l'étage suivant"));
   autoProgressionControlsEl.appendChild(autoFloorLabel);
 }
 
@@ -403,8 +434,6 @@ function hideSaveIndicator() {
     saveIndicatorEl.classList.add('hidden');
 }
 
-
-// --- FONCTION PRINCIPALE EXPORTÉE ---
 function updateUI(state, dt) {
   flushDamageBuckets(state, dt);
   handleSpamTexts(state);
@@ -449,7 +478,6 @@ function updateUI(state, dt) {
   }
 }
 
-// --- EXPORT NOMMÉS ---
 export {
     updateUI,
     showSavingIndicator,

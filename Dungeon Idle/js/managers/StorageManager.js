@@ -1,8 +1,8 @@
 // js/managers/StorageManager.js
 
-// On importe les classes nécessaires pour "réhydrater" (recréer) les objets à partir des données sauvegardées.
 import { HERO_DEFINITIONS } from '../data/heroData.js';
 import { Hero } from '../entities/Hero.js';
+import { Priest } from '../entities/Priest.js';
 import { MonsterGroup } from '../entities/MonsterGroup.js';
 import { Boss } from '../entities/Boss.js';
 import { Item } from '../entities/Item.js';
@@ -15,9 +15,6 @@ const SAVE_KEY = 'dungeonIdleSave';
  */
 function save(state) {
     try {
-        // On crée une copie de l'état pour ne pas modifier l'original.
-        // On exclut les propriétés "transitoires" qui ne doivent pas être sauvegardées
-        // (comme les objets en boutique ou l'objet en cours d'équipement).
         const stateToSave = { ...state };
         delete stateToSave.shopItems;
         delete stateToSave.droppedItems;
@@ -44,37 +41,68 @@ function load() {
         const loadedData = JSON.parse(savedStateJSON);
 
         // --- Réhydratation ---
-        // On s'assure que les propriétés de base existent pour éviter les erreurs.
         loadedData.heroDefinitions = loadedData.heroDefinitions || JSON.parse(JSON.stringify(HERO_DEFINITIONS));
-        loadedData.droppedItems = []; // Toujours vide au chargement
-        loadedData.inventory = loadedData.inventory || [];
-        loadedData.shopItems = []; // Toujours vide au chargement
-        loadedData.itemToEquip = null; // Jamais sauvegardé
+        loadedData.droppedItems = [];
+        // Réhydrate les objets de l'inventaire
+        if (loadedData.inventory) {
+            loadedData.inventory = loadedData.inventory.map(itemData => {
+                if (!itemData || !itemData.baseDefinition) return null;
+                const item = new Item(itemData.baseDefinition, itemData.level);
+                Object.assign(item, itemData);
+                return item;
+            }).filter(i => i !== null);
+        } else {
+            loadedData.inventory = [];
+        }
+        
+        loadedData.shopItems = [];
+        loadedData.itemToEquip = null;
 
         // On recrée les instances de Héros avec leurs méthodes.
         loadedData.heroes = loadedData.heroes.map(heroData => {
             const heroDef = loadedData.heroDefinitions[heroData.id.toUpperCase()];
-            const hero = new Hero(heroDef);
+            if (!heroDef) {
+                console.warn(`Définition de héros non trouvée pour l'ID: ${heroData.id}. Ce héros sera ignoré.`);
+                return null;
+            }
+            
+            let hero;
+            switch(heroData.id) {
+                case 'priest':
+                    hero = new Priest(heroDef);
+                    break;
+                default:
+                    hero = new Hero(heroDef);
+                    break;
+            }
+
+            // Copie les propriétés sauvegardées (level, xp, etc.) sur la nouvelle instance
             Object.assign(hero, heroData);
+
             // On recrée aussi les instances des objets équipés.
             for (const slot in hero.equipment) {
                 const itemData = hero.equipment[slot];
-                if (itemData) {
+                if (itemData && itemData.baseDefinition) {
                     const item = new Item(itemData.baseDefinition, itemData.level);
                     Object.assign(item, itemData);
                     hero.equipment[slot] = item;
+                } else {
+                    hero.equipment[slot] = null;
                 }
             }
+            
+            hero.activeBuffs = hero.activeBuffs || [];
+
             return hero;
-        });
+        }).filter(h => h !== null);
         
         // On recrée l'instance du monstre actif.
         if(loadedData.activeMonster) {
-            if(loadedData.activeMonster.initialCount !== undefined) { // C'est un MonsterGroup
+            if(loadedData.activeMonster.initialCount !== undefined) {
                 const monster = new MonsterGroup(loadedData.activeMonster.baseDefinition, loadedData.activeMonster.initialCount);
                 Object.assign(monster, loadedData.activeMonster);
                 loadedData.activeMonster = monster;
-            } else { // C'est un Boss
+            } else {
                 const boss = new Boss(loadedData.activeMonster.name, loadedData.activeMonster.maxHp, loadedData.activeMonster.dps, loadedData.activeMonster.level);
                 Object.assign(boss, loadedData.activeMonster);
                 loadedData.activeMonster = boss;
@@ -85,8 +113,9 @@ function load() {
         return loadedData;
 
     } catch (e) {
-        console.error("Erreur lors du chargement de la sauvegarde (peut-être corrompue) :", e);
-        localStorage.removeItem(SAVE_KEY); // On supprime la sauvegarde invalide
+        console.error("Erreur lors du chargement de la sauvegarde (il est possible qu'elle soit corrompue et doive être réinitialisée) :", e);
+        // On ne supprime pas automatiquement pour ne pas faire perdre la partie à l'utilisateur sans son accord
+        // localStorage.removeItem(SAVE_KEY); 
         return null;
     }
 }
@@ -100,7 +129,6 @@ function reset() {
     location.reload();
 }
 
-// On exporte un objet contenant nos méthodes publiques.
 export const StorageManager = {
     save,
     load,

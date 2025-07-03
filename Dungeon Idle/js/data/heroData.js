@@ -6,7 +6,6 @@ export const HERO_DEFINITIONS = {
         baseDps: 5,
         cost: 0,
         status: 'recruited',
-        // Stats de croissance
         hpPerLevel: 10,
         dpsPerLevel: 5
     },
@@ -16,9 +15,11 @@ export const HERO_DEFINITIONS = {
         baseDps: 15,
         cost: 100,
         status: 'locked',
-        // Stats de croissance
-        hpPerLevel: 20, // Tanky
-        dpsPerLevel: 2   // Peu de dégâts
+        hpPerLevel: 20,
+        dpsPerLevel: 2,
+        allowedSubTypes: {
+            arme: ['arme_dps']
+        }
     },
     MAGE: {
         id: 'mage',
@@ -26,8 +27,25 @@ export const HERO_DEFINITIONS = {
         baseDps: 25,
         cost: 0,
         status: 'locked',
-        // Stats de croissance
-        hpPerLevel: 2,   // Fragile
-        dpsPerLevel: 10  // Gros dégâts
+        hpPerLevel: 2,
+        dpsPerLevel: 10
+    },
+    PRIEST: {
+        id: 'priest',
+        name: 'Prêtre',
+        baseDps: 0,
+        cost: 10000,
+        status: 'locked',
+        // Stats de croissance (tanky, comme demandé)
+        hpPerLevel: 18,
+        dpsPerLevel: 0,
+        // Nouvelles stats de base
+        baseHealPerSecond: 5,
+        baseBuffChance: 0.2, // 20% de chance par seconde
+        baseBuffDuration: 5,
+        // Autorise uniquement les objets sacrés en main
+        allowedSubTypes: {
+            arme: ['arme_sacre']
+        }
     }
 };
