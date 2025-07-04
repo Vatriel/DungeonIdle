@@ -11,6 +11,7 @@ export class Hero {
     this.xp = 0;
     this.xpToNextLevel = 100;
     this.definition = heroDefinition;
+    this.attackTimer = 0;
 
     this.equipment = {
       arme: null, torse: null, tete: null, jambes: null,
@@ -19,12 +20,12 @@ export class Hero {
     };
     this.activeBuffs = [];
 
-    this.baseDps = heroDefinition.baseDps;
-    this.baseMaxHp = 100;
+    // Constantes de base
+    this.baseMaxHp = 50;
     this.baseArmor = 0;
     this.baseCritChance = 0.05;
     this.baseCritDamage = 1.5;
-    this.baseHpRegen = 0;
+    this.baseHpRegen = 1;
     this.baseGoldFind = 0;
     
     this._statsCache = {};
@@ -32,9 +33,7 @@ export class Hero {
     this.hp = this.maxHp;
   }
 
-  // MODIFIÉ : On passe maintenant l'état complet (state) pour que les sous-classes comme Priest puissent y accéder
   update(state, dt, eventBus) {
-      // La régénération de base se fait ici
       const regenResult = this.regenerate(this.hpRegen * dt);
       if (regenResult.statusChanged) {
           state.ui.heroesNeedUpdate = true;
@@ -65,8 +64,10 @@ export class Hero {
   
   _getBonusesFromEquipment(equipment) {
       const bonuses = {
-        dps: 0, dpsPercent: 0, maxHp: 0, hpPercent: 0,
-        armor: 0, critChance: 0, critDamage: 0, hpRegen: 0, goldFind: 0,
+        strength: 0, dexterity: 0, intelligence: 0, endurance: 0,
+        damagePercent: 0, attackSpeedPercent: 0, flatPhysicalDamage: 0, flatMagicalDamage: 0,
+        maxHp: 0, hpPercent: 0, armor: 0, critChance: 0, critDamage: 0, 
+        hpRegen: 0, goldFind: 0, lifeSteal: 0, thorns: 0,
         healPower: 0, healPercent: 0, buffPotency: 0, buffDuration: 0,
       };
       for (const slot in equipment) {
@@ -92,13 +93,39 @@ export class Hero {
     });
 
     const calculatedStats = {};
-    calculatedStats.dps = this.baseDps * (1 + (bonuses.dpsPercent / 100)) + bonuses.dps;
-    calculatedStats.maxHp = Math.ceil((this.baseMaxHp + bonuses.maxHp) * (1 + (bonuses.hpPercent / 100)));
-    calculatedStats.armor = this.baseArmor + bonuses.armor;
-    calculatedStats.critChance = this.baseCritChance + (bonuses.critChance / 100);
-    calculatedStats.critDamage = this.baseCritDamage + (bonuses.critDamage / 100);
-    calculatedStats.hpRegen = this.baseHpRegen + bonuses.hpRegen;
-    calculatedStats.goldFind = this.baseGoldFind + (bonuses.goldFind / 100);
+    
+    calculatedStats.strength = this.definition.baseStrength + (this.level - 1) * this.definition.strengthPerLevel + (bonuses.strength || 0);
+    calculatedStats.dexterity = this.definition.baseDexterity + (this.level - 1) * this.definition.dexterityPerLevel + (bonuses.dexterity || 0);
+    calculatedStats.intelligence = this.definition.baseIntelligence + (this.level - 1) * this.definition.intelligencePerLevel + (bonuses.intelligence || 0);
+    calculatedStats.endurance = this.definition.baseEndurance + (this.level - 1) * this.definition.endurancePerLevel + (bonuses.endurance || 0);
+
+    let baseDamageFromStats = this.definition.baseDamage;
+    if (this.definition.damageType === 'physical') {
+        baseDamageFromStats += calculatedStats.strength * 2;
+    } else {
+        baseDamageFromStats += calculatedStats.intelligence * 2;
+    }
+
+    calculatedStats.maxHp = this.baseMaxHp + (calculatedStats.endurance * 20);
+    calculatedStats.armor = this.baseArmor + (calculatedStats.strength * 0.5) + (calculatedStats.endurance * 0.25);
+    calculatedStats.critChance = this.baseCritChance + ((bonuses.critChance || 0) / 100);
+    calculatedStats.critDamage = this.baseCritDamage + ((bonuses.critDamage || 0) / 100);
+    calculatedStats.hpRegen = this.baseHpRegen + (calculatedStats.endurance * 0.1);
+
+    const flatDamageBonus = (this.definition.damageType === 'physical' ? (bonuses.flatPhysicalDamage || 0) : (bonuses.flatMagicalDamage || 0));
+    calculatedStats.damage = (baseDamageFromStats + flatDamageBonus) * (1 + ((bonuses.damagePercent || 0) / 100));
+    
+    const baseAttackSpeed = this.definition.baseAttackSpeed;
+    calculatedStats.attackSpeed = baseAttackSpeed * (1 + ((bonuses.attackSpeedPercent || 0) / 100));
+
+    calculatedStats.maxHp = Math.ceil((calculatedStats.maxHp + (bonuses.maxHp || 0)) * (1 + ((bonuses.hpPercent || 0) / 100)));
+    calculatedStats.armor += (bonuses.armor || 0);
+    calculatedStats.hpRegen += (bonuses.hpRegen || 0);
+    
+    // CORRECTION : On divise par 100 ici pour convertir en vrai pourcentage, comme pour les critiques.
+    calculatedStats.goldFind = this.baseGoldFind + ((bonuses.goldFind || 0) / 100);
+    calculatedStats.lifeSteal = ((bonuses.lifeSteal || 0) / 100);
+    calculatedStats.thorns = bonuses.thorns || 0;
     
     if (equipmentOverride === this.equipment) {
         this._statsCache = calculatedStats;
@@ -106,33 +133,45 @@ export class Hero {
     return calculatedStats;
   }
   
-  get dps() { return this._statsCache.dps || 0; }
+  get strength() { return this._statsCache.strength || 0; }
+  get dexterity() { return this._statsCache.dexterity || 0; }
+  get intelligence() { return this._statsCache.intelligence || 0; }
+  get endurance() { return this._statsCache.endurance || 0; }
+  get damage() { return this._statsCache.damage || 0; }
+  get attackSpeed() { return this._statsCache.attackSpeed || 0; }
   get maxHp() { return this._statsCache.maxHp || 0; }
   get armor() { return this._statsCache.armor || 0; }
   get critChance() { return this._statsCache.critChance || 0; }
   get critDamage() { return this._statsCache.critDamage || 0; }
   get hpRegen() { return this._statsCache.hpRegen || 0; }
   get goldFind() { return this._statsCache.goldFind || 0; }
+  get lifeSteal() { return this._statsCache.lifeSteal || 0; }
+  get thorns() { return this._statsCache.thorns || 0; }
   getAllStats() { return { ...this._statsCache }; }
 
   calculateStatChanges(newItem) {
-    const changes = {};
     const currentStats = this.getAllStats();
-    const slot = newItem.baseDefinition.slot;
-    const simulatedEquipment = { ...this.equipment, [slot]: newItem };
+    let targetSlot = newItem.baseDefinition.slot;
+
+    if (targetSlot === 'ring') {
+        targetSlot = 'anneau1';
+    }
+
+    const simulatedEquipment = { ...this.equipment, [targetSlot]: newItem };
     const newStats = this._recalculateStats(simulatedEquipment);
+    const changes = {};
+
     for (const statKey in currentStats) {
         const diff = newStats[statKey] - currentStats[statKey];
-        if (Math.abs(diff) > 0.001) {
+        if (Math.abs(diff) > 0.0001) { // Utilisation d'un epsilon plus petit pour les pourcentages
             changes[statKey] = diff;
         }
     }
     return changes;
   }
 
-  equipItem(item) {
-    if (!item || !item.baseDefinition.slot) return;
-    const slot = item.baseDefinition.slot;
+  equipItem(item, slot) {
+    if (!item || !slot) return;
     this.equipment[slot] = item;
     this._recalculateStats();
     if (this.hp > this.maxHp) {
@@ -154,8 +193,6 @@ export class Hero {
   levelUp(eventBus) {
     this.level++;
     this.xp -= this.xpToNextLevel;
-    this.baseMaxHp += this.definition.hpPerLevel;
-    this.baseDps += this.definition.dpsPerLevel;
     this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
     this._recalculateStats();
     this.hp = this.maxHp;
@@ -167,7 +204,6 @@ export class Hero {
       this._recalculateStats();
   }
 
-  // MODIFIÉ : La fonction retourne maintenant un objet détaillé
   regenerate(amount) {
       if (this.hp >= this.maxHp) return { healedAmount: 0, statusChanged: false };
       const oldHp = this.hp;
@@ -191,15 +227,14 @@ export class Hero {
       } 
   }
   
-  // MODIFIÉ : La fonction retourne maintenant un booléen si le statut a changé
   takeDamage(amount) { 
       if (this.status !== 'fighting') return false; 
       this.hp = Math.max(0, this.hp - amount); 
       if (this.hp === 0) { 
           this.status = 'recovering'; 
-          return true; // Le statut a changé !
+          return true;
       }
-      return false; // Pas de changement de statut
+      return false;
   }
   
   isFighting() { return this.status === 'fighting'; }

@@ -11,7 +11,8 @@ const RECOVERY_RATE_WIPE = 25;
 const ENGAGEMENT_LIMIT = 3;
 const ENEMY_SCALING_FACTOR = 1.15;
 const BASE_BOSS_HP = 200;
-const BASE_BOSS_DPS = 15;
+const BASE_BOSS_DAMAGE = 15;
+const BASE_BOSS_ATTACK_SPEED = 1.0;
 const ARMOR_CONSTANT = 200;
 const BASE_DROP_CHANCE = 0.15;
 const ENCOUNTER_COOLDOWN_DURATION = 0.5;
@@ -50,69 +51,93 @@ function prepareNextEncounter(state, eventBus) {
 }
 
 function runFightingLogic(state, dt, eventBus) {
-    if (!state.activeMonster) {
-        console.warn("État de combat sans monstre actif. Préparation d'une nouvelle rencontre.");
-        prepareNextEncounter(state, eventBus);
-        return;
-    }
-
-    if (!state.activeMonster.isAlive()) {
-        handleMonsterDefeated(state, eventBus);
+    if (!state.activeMonster || !state.activeMonster.isAlive()) {
+        if (state.activeMonster) {
+            handleMonsterDefeated(state, eventBus);
+        } else {
+            prepareNextEncounter(state, eventBus);
+        }
         return;
     }
 
     state.ui.heroBarsNeedUpdate = true; 
 
+    // --- LOGIQUE D'ATTAQUE DES HÉROS ---
     state.heroes.forEach(hero => {
-        hero.update(state, dt, eventBus);
-    });
-    
-    let totalPartyDps = 0;
-    state.heroes.forEach(hero => {
-        if (hero.isFighting()) {
-            let heroDps = hero.dps;
+        hero.update(state, dt, eventBus); // Met à jour les buffs, etc.
+        if (!hero.isFighting()) return;
+
+        hero.attackTimer += dt;
+        const attackCooldown = 1 / hero.attackSpeed;
+
+        if (hero.attackTimer >= attackCooldown) {
+            hero.attackTimer -= attackCooldown;
+
+            let damageDealt = hero.damage;
             let isCrit = false;
             if (Math.random() < hero.critChance) {
-                heroDps *= hero.critDamage;
+                damageDealt *= hero.critDamage;
                 isCrit = true;
             }
-            const damageDealt = heroDps * dt;
-            totalPartyDps += damageDealt;
 
+            state.activeMonster.takeDamage(damageDealt);
+            
             if (!state.damageBuckets.monster) state.damageBuckets.monster = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
             if (isCrit) state.damageBuckets.monster.crit += damageDealt;
             else state.damageBuckets.monster.damage += damageDealt;
         }
     });
-    state.activeMonster.takeDamage(totalPartyDps);
-
-    let monsterTotalDps = 0;
-    let baseDpsPerAttacker = 0;
-    if (state.activeMonster instanceof MonsterGroup) {
-        monsterTotalDps = state.activeMonster.baseDefinition.baseDps * state.activeMonster.currentCount;
-        baseDpsPerAttacker = state.activeMonster.baseDefinition.baseDps;
-    } else {
-        monsterTotalDps = state.activeMonster.dps;
-        baseDpsPerAttacker = state.activeMonster.dps;
+    
+    // Si le monstre est mort après les attaques des héros
+    if (!state.activeMonster.isAlive()) {
+        handleMonsterDefeated(state, eventBus);
+        return;
     }
 
-    let remainingDpsToDeal = monsterTotalDps * dt;
-    const fightingHeroes = state.heroes.filter(hero => hero.isFighting());
+    // --- LOGIQUE D'ATTAQUE DU MONSTRE ---
+    const monster = state.activeMonster;
+    monster.attackTimer += dt;
 
-    for (const hero of fightingHeroes) {
-        if (remainingDpsToDeal <= 0) break;
-        const maxDpsOnThisHero = (state.activeMonster instanceof Boss) ? remainingDpsToDeal : (ENGAGEMENT_LIMIT * baseDpsPerAttacker) * dt;
-        const dpsDealtToHero = Math.min(remainingDpsToDeal, maxDpsOnThisHero);
-        const damageReduction = hero.armor / (hero.armor + ARMOR_CONSTANT);
-        const finalDamage = dpsDealtToHero * (1 - damageReduction);
-        
-        if (hero.takeDamage(finalDamage)) {
-            state.ui.heroesNeedUpdate = true;
+    let monsterAttackSpeed;
+    if (monster instanceof MonsterGroup) {
+        monsterAttackSpeed = monster.baseDefinition.baseAttackSpeed;
+    } else { // Boss
+        monsterAttackSpeed = monster.attackSpeed;
+    }
+    const monsterAttackCooldown = 1 / monsterAttackSpeed;
+
+    if (monster.attackTimer >= monsterAttackCooldown) {
+        monster.attackTimer -= monsterAttackCooldown;
+
+        let totalDamageToDeal;
+        let damagePerAttacker;
+
+        if (monster instanceof MonsterGroup) {
+            damagePerAttacker = monster.baseDefinition.baseDamage;
+            totalDamageToDeal = damagePerAttacker * monster.currentCount;
+        } else { // Boss
+            damagePerAttacker = monster.damage;
+            totalDamageToDeal = monster.damage;
         }
 
-        if (!state.damageBuckets[hero.id]) state.damageBuckets[hero.id] = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
-        state.damageBuckets[hero.id].damage += finalDamage;
-        remainingDpsToDeal -= dpsDealtToHero;
+        let remainingDamageToDeal = totalDamageToDeal;
+        const fightingHeroes = state.heroes.filter(hero => hero.isFighting());
+
+        for (const hero of fightingHeroes) {
+            if (remainingDamageToDeal <= 0) break;
+            const maxDamageOnThisHero = (monster instanceof Boss) ? remainingDamageToDeal : (ENGAGEMENT_LIMIT * damagePerAttacker);
+            const damageDealtToHero = Math.min(remainingDamageToDeal, maxDamageOnThisHero);
+            const damageReduction = hero.armor / (hero.armor + ARMOR_CONSTANT);
+            const finalDamage = damageDealtToHero * (1 - damageReduction);
+            
+            if (hero.takeDamage(finalDamage)) {
+                state.ui.heroesNeedUpdate = true;
+            }
+
+            if (!state.damageBuckets[hero.id]) state.damageBuckets[hero.id] = { damage: 0, crit: 0, heal: 0, timer: 0.3 };
+            state.damageBuckets[hero.id].damage += finalDamage;
+            remainingDamageToDeal -= damageDealtToHero;
+        }
     }
 
     if (state.heroes.every(hero => !hero.isFighting())) {
@@ -163,17 +188,10 @@ function handleMonsterDefeated(state, eventBus) {
 
     if (wasBoss) {
         state.bossIsDefeated = true;
-        // SUPPRIMÉ : La condition pour avancer automatiquement à l'étage suivant a été retirée.
-        // L'avancement se fera désormais via le bouton "Étage Suivant".
     } else {
-        // CORRECTION : La logique de déblocage du boss est revue pour être plus fiable.
-        // On vérifie d'abord si la rencontre actuelle est celle qui débloque le boss.
         if (state.encounterIndex >= state.encountersPerFloor && !state.bossUnlockReached) {
             state.bossUnlockReached = true;
-            // SUPPRIMÉ : La condition pour passer automatiquement au boss a été retirée.
-            // Le joueur doit maintenant cliquer sur le bouton "Affronter le Boss".
         }
-        // On incrémente ensuite le compteur pour la prochaine rencontre.
         state.encounterIndex++;
     }
 
@@ -214,7 +232,8 @@ function generateRegularEncounter(state, eventBus) {
         ...chosenMonsterDef, 
         level: currentFloor, 
         baseHp: Math.ceil(chosenMonsterDef.baseHp * scale), 
-        baseDps: parseFloat((chosenMonsterDef.baseDps * scale).toFixed(2)) 
+        baseDamage: parseFloat((chosenMonsterDef.baseDamage * scale).toFixed(2)),
+        baseAttackSpeed: chosenMonsterDef.baseAttackSpeed // La vitesse n'augmente pas avec les étages pour l'instant
     };
     
     const newMonster = new MonsterGroup(scaledDef, monsterCount);
@@ -236,8 +255,9 @@ function startBossFight(state, eventBus) {
     const bossLevel = state.dungeonFloor;
     const bossName = `${BOSS_NAMES[Math.floor(Math.random() * BOSS_NAMES.length)]} ${BOSS_TITLES[Math.floor(Math.random() * BOSS_TITLES.length)]}`;
     const bossHp = Math.ceil((BASE_BOSS_HP * bossLevel) * scale);
-    const bossDps = parseFloat((BASE_BOSS_DPS * scale).toFixed(2));
-    const newMonster = new Boss(bossName, bossHp, bossDps, bossLevel);
+    const bossDamage = parseFloat((BASE_BOSS_DAMAGE * scale).toFixed(2));
+    const bossAttackSpeed = BASE_BOSS_ATTACK_SPEED;
+    const newMonster = new Boss(bossName, bossHp, bossDamage, bossAttackSpeed, bossLevel);
 
     eventBus.emit('encounter_changed', {
         newStatus: 'boss_fight',

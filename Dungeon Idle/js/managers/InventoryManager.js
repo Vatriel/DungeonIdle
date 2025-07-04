@@ -19,34 +19,49 @@ function addItem(state, item, eventBus) {
     return true;
 }
 
-function equipItemFromDrag(state, inventoryIndex, heroId, eventBus) {
-    const itemToEquip = state.inventory[inventoryIndex];
-    const hero = state.heroes.find(h => h.id === heroId);
-
-    if (!itemToEquip || !hero) {
-        console.error("Erreur lors de l'équipement par drag-and-drop : objet ou héros non trouvé.");
-        return;
+function determineTargetSlot(hero, item) {
+    // Si l'objet est un anneau, on trouve un emplacement libre ou on prend le premier par défaut
+    if (item.baseDefinition.slot === 'ring') {
+        if (!hero.equipment.anneau1) return 'anneau1';
+        if (!hero.equipment.anneau2) return 'anneau2';
+        return 'anneau1'; // Remplacer le premier anneau par défaut
     }
+    // Sinon, on retourne l'emplacement défini de l'objet
+    return item.baseDefinition.slot;
+}
 
-    const classRestriction = itemToEquip.baseDefinition.classRestriction;
+function equipItem(state, hero, item, inventoryIndex, eventBus) {
+    if (!item || !hero) return;
+
+    // Vérification des restrictions de classe
+    const classRestriction = item.baseDefinition.classRestriction;
     if (classRestriction && !classRestriction.includes(hero.id)) {
         eventBus.emit('notification_sent', { message: `Cet objet est réservé à la classe ${classRestriction.join(', ')}.`, type: 'error' });
         return;
     }
     
-    const itemSubType = itemToEquip.baseDefinition.subType;
+    // Vérification des restrictions de sous-type (ex: arme sacrée pour prêtre)
+    const itemSubType = item.baseDefinition.subType;
     if (itemSubType) {
-        const allowedSubTypes = hero.definition.allowedSubTypes?.[itemToEquip.baseDefinition.slot];
+        const allowedSubTypes = hero.definition.allowedSubTypes?.[item.baseDefinition.slot];
         if (allowedSubTypes && !allowedSubTypes.includes(itemSubType)) {
             eventBus.emit('notification_sent', { message: `Ce type d'objet ne peut pas être équipé par un(e) ${hero.name}.`, type: 'error' });
             return;
         }
     }
 
-    const currentlyEquipped = hero.equipment[itemToEquip.baseDefinition.slot];
-    state.inventory.splice(inventoryIndex, 1);
-    hero.equipItem(itemToEquip);
+    const targetSlot = determineTargetSlot(hero, item);
+    const currentlyEquipped = hero.equipment[targetSlot];
 
+    // On retire l'objet de l'inventaire
+    if (inventoryIndex !== null) {
+        state.inventory.splice(inventoryIndex, 1);
+    }
+    
+    // On équipe le nouvel objet
+    hero.equipItem(item, targetSlot);
+
+    // Si un objet était déjà équipé, on le remet dans l'inventaire
     if (currentlyEquipped) {
         addItem(state, currentlyEquipped, eventBus);
     }
@@ -56,38 +71,18 @@ function equipItemFromDrag(state, inventoryIndex, heroId, eventBus) {
 }
 
 
+function equipItemFromDrag(state, inventoryIndex, heroId, eventBus) {
+    const itemToEquip = state.inventory[inventoryIndex];
+    const hero = state.heroes.find(h => h.id === heroId);
+    equipItem(state, hero, itemToEquip, inventoryIndex, eventBus);
+    cancelEquip(state); // On quitte le mode d'équipement après un drag-and-drop réussi
+}
+
+
 function equipItemOnHero(state, hero, eventBus) {
-    if (!state.itemToEquip || !hero) return;
-
+    if (!state.itemToEquip) return;
     const itemToEquip = state.inventory[state.itemToEquip.inventoryIndex];
-    if (!itemToEquip) return;
-
-    const classRestriction = itemToEquip.baseDefinition.classRestriction;
-    if (classRestriction && !classRestriction.includes(hero.id)) {
-        eventBus.emit('notification_sent', { message: `Cet objet est réservé à la classe ${classRestriction.join(', ')}.`, type: 'error' });
-        cancelEquip(state);
-        return;
-    }
-    
-    const itemSubType = itemToEquip.baseDefinition.subType;
-    if (itemSubType) {
-        const allowedSubTypes = hero.definition.allowedSubTypes?.[itemToEquip.baseDefinition.slot];
-        if (allowedSubTypes && !allowedSubTypes.includes(itemSubType)) {
-            eventBus.emit('notification_sent', { message: `Ce type d'objet ne peut pas être équipé par un(e) ${hero.name}.`, type: 'error' });
-            cancelEquip(state);
-            return;
-        }
-    }
-
-    const currentlyEquipped = hero.equipment[itemToEquip.baseDefinition.slot];
-    state.inventory.splice(state.itemToEquip.inventoryIndex, 1);
-    hero.equipItem(itemToEquip);
-
-    if (currentlyEquipped) {
-        addItem(state, currentlyEquipped, eventBus);
-    }
-    
-    state.ui.heroesNeedUpdate = true;
+    equipItem(state, hero, itemToEquip, state.itemToEquip.inventoryIndex, eventBus);
     cancelEquip(state);
 }
 
@@ -151,9 +146,6 @@ function discardInventoryItem(state, itemIndex) {
     state.ui.inventoryNeedsUpdate = true;
 }
 
-// CORRECTION : C'est ce bloc qui doit être présent et correct.
-// Il rassemble toutes les fonctions du fichier dans un seul objet
-// et l'exporte sous le nom "InventoryManager".
 export const InventoryManager = {
     addItem,
     equipItemOnHero,

@@ -5,45 +5,60 @@ export const MONSTER_DEFINITIONS = {
     id: 'goblin',
     name: "Gobelin",
     baseHp: 30,
-    baseDps: 3,
-    // NOUVEAU : Configuration de l'apparition
+    // NOUVELLES STATS DE COMBAT
+    damageType: 'physical',
+    baseDamage: 2.5,
+    baseAttackSpeed: 1.2,
+    // CONFIGURATION D'APPARITION
     appearsAtFloor: 1,
-    groupSize: { base: 2, perFloor: 0.5, random: 3 } // 2 + (0.5 * floor) + random(0-2)
+    groupSize: { base: 2, perFloor: 0.5, random: 3 }
   },
   ORC: {
     id: 'orc',
     name: "Orque",
     baseHp: 80,
-    baseDps: 8,
-    // NOUVEAU : Configuration de l'apparition
+    // NOUVELLES STATS DE COMBAT
+    damageType: 'physical',
+    baseDamage: 8,
+    baseAttackSpeed: 0.8,
+    // CONFIGURATION D'APPARITION
     appearsAtFloor: 3,
-    groupSize: { base: 1, perFloor: 0.33, random: 2 } // 1 + (0.33 * floor) + random(0-1)
+    groupSize: { base: 1, perFloor: 0.33, random: 2 }
   },
   SKELETON: {
     id: 'skeleton',
     name: "Squelette",
     baseHp: 150,
-    baseDps: 12,
-    // NOUVEAU : Configuration de l'apparition
+    // NOUVELLES STATS DE COMBAT
+    damageType: 'physical',
+    baseDamage: 10,
+    baseAttackSpeed: 1.0,
+    // CONFIGURATION D'APPARITION
     appearsAtFloor: 5,
-    groupSize: { base: 2, perFloor: 0.2, random: 3 } // 2 + (0.2 * floor) + random(0-2)
+    groupSize: { base: 2, perFloor: 0.2, random: 3 }
   },
   GHOUL: {
     id: 'ghoul',
     name: "Goule",
     baseHp: 320,
-    baseDps: 25,
-    // NOUVEAU : Configuration de l'apparition
+    // NOUVELLES STATS DE COMBAT
+    damageType: 'physical',
+    baseDamage: 20,
+    baseAttackSpeed: 1.1,
+    // CONFIGURATION D'APPARITION
     appearsAtFloor: 10,
-    groupSize: { base: 1, perFloor: 0.125, random: 1 } // 1 + (0.125 * floor)
+    groupSize: { base: 1, perFloor: 0.125, random: 1 }
   },
   STONE_GOLEM: {
     id: 'stone_golem',
     name: "Golem de pierre",
     baseHp: 800,
-    baseDps: 40,
-    // NOUVEAU : Configuration de l'apparition
+    // NOUVELLES STATS DE COMBAT
+    damageType: 'physical',
+    baseDamage: 50,
+    baseAttackSpeed: 0.5,
+    // CONFIGURATION D'APPARITION
     appearsAtFloor: 15,
-    groupSize: { base: 1, perFloor: 0, random: 1 } // Toujours 1
+    groupSize: { base: 1, perFloor: 0, random: 1 }
   }
 };

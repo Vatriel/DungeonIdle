@@ -15,47 +15,106 @@ function createElement(tag, options = {}) {
     return el;
 }
 
-function renderStatLine(label, baseValue, change, isPercent = false) {
-    const displayValue = isPercent ? (baseValue * 100).toFixed(1) + '%' : Math.ceil(baseValue);
-    const p = createElement('p', { className: 'hero-stats', textContent: `${label}: ${displayValue}` });
+// Helper pour créer une ligne de stat, avec ou sans comparaison
+function createStatLine(label, baseValue, change, options = {}) {
+    const { isPercent = false, decimals = 0, tooltip = '' } = options;
+    
+    const p = createElement('p');
+    if (tooltip) p.title = tooltip;
 
-    if (change !== 0 && change !== undefined) {
-        const newValue = baseValue + change;
+    const labelSpan = `<span>${label}</span>`;
+    let valueSpan;
+
+    const finalValue = baseValue + (change || 0);
+    const roundedChange = change ? parseFloat(change.toFixed(decimals)) : 0;
+
+    // Si un changement existe et qu'il est significatif, on affiche la comparaison
+    if (change && roundedChange !== 0) {
+        const valueString = isPercent ? `${(finalValue * 100).toFixed(decimals)}%` : finalValue.toFixed(decimals);
         const changeSign = change > 0 ? '+' : '';
+        const changeString = isPercent ? (change * 100).toFixed(decimals) : change.toFixed(decimals);
         const changeClass = change > 0 ? 'stat-increase' : 'stat-decrease';
-        const changeDisplay = isPercent ? (change * 100).toFixed(1) + '%' : Math.round(change);
-        const newDisplayValue = isPercent ? (newValue * 100).toFixed(1) + '%' : Math.ceil(newValue);
-
-        p.innerHTML = '';
-        p.appendChild(document.createTextNode(`${label}: `));
-        const span = createElement('span', {
-            className: changeClass,
-            textContent: `${newDisplayValue} (${changeSign}${changeDisplay})`
-        });
-        p.appendChild(span);
+        
+        valueSpan = `<span>${valueString} <span class="${changeClass}">(${changeSign}${changeString})</span></span>`;
+    } else {
+        // Affichage normal
+        const valueString = isPercent ? `${(baseValue * 100).toFixed(decimals)}%` : baseValue.toFixed(decimals);
+        valueSpan = `<span>${valueString}</span>`;
     }
+    
+    p.innerHTML = labelSpan + valueSpan;
     return p;
 }
 
-function renderHeroStatsGrid(hero, itemToEquip) {
-    const statsGrid = createElement('div', { className: 'hero-stats-grid' });
-    if (itemToEquip && hero.equipment[itemToEquip.baseDefinition.slot] !== undefined) {
-        const changes = hero.calculateStatChanges(itemToEquip);
-        const currentStats = hero.getAllStats();
-        statsGrid.appendChild(renderStatLine('DPS', currentStats.dps, changes.dps));
-        statsGrid.appendChild(renderStatLine('HP', currentStats.maxHp, changes.maxHp));
-        statsGrid.appendChild(renderStatLine('Armure', currentStats.armor, changes.armor));
-        statsGrid.appendChild(renderStatLine('Crit', currentStats.critChance, changes.critChance, true));
-        statsGrid.appendChild(renderStatLine('HP/s', currentStats.hpRegen, changes.hpRegen));
-    } else {
-        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `DPS: ${hero.dps.toFixed(1)}` }));
-        statsGrid.appendChild(createElement('p', { className: 'hero-stats hero-hp-text', textContent: `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}` }));
-        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `Armure: ${hero.armor}` }));
-        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `Crit: ${(hero.critChance * 100).toFixed(1)}%` }));
-        statsGrid.appendChild(createElement('p', { className: 'hero-stats', textContent: `HP/s: ${hero.hpRegen.toFixed(1)}` }));
+
+function renderHeroDetails(hero, itemToEquip) {
+    const detailsContainer = createElement('div', { className: 'hero-details-container' });
+
+    let changes = {};
+    const currentStats = hero.getAllStats();
+    if (itemToEquip) {
+        changes = hero.calculateStatChanges(itemToEquip);
     }
-    return statsGrid;
+
+    // --- Section Attributs ---
+    const attributesGroup = createElement('div', { className: 'stats-group' });
+    attributesGroup.innerHTML = '<h4>Attributs</h4>';
+    attributesGroup.appendChild(createStatLine('Force', currentStats.strength, changes.strength));
+    attributesGroup.appendChild(createStatLine('Dextérité', currentStats.dexterity, changes.dexterity));
+    attributesGroup.appendChild(createStatLine('Intelligence', currentStats.intelligence, changes.intelligence));
+    attributesGroup.appendChild(createStatLine('Endurance', currentStats.endurance, changes.endurance));
+    detailsContainer.appendChild(attributesGroup);
+
+    // --- Section Combat ---
+    const combatGroup = createElement('div', { className: 'stats-group' });
+    combatGroup.innerHTML = '<h4>Combat</h4>';
+    combatGroup.appendChild(createStatLine('Dégâts', currentStats.damage, changes.damage, { decimals: 1, tooltip: `Type: ${hero.definition.damageType}` }));
+    // CORRECTION: Application des décimales demandées
+    combatGroup.appendChild(createStatLine('Vit. Atk', currentStats.attackSpeed, changes.attackSpeed, { decimals: 2, tooltip: 'Attaques par seconde' }));
+    combatGroup.appendChild(createStatLine('Chance Crit.', currentStats.critChance, changes.critChance, { isPercent: true, decimals: 1 }));
+    combatGroup.appendChild(createStatLine('Dégâts Crit.', currentStats.critDamage, changes.critDamage, { isPercent: true, decimals: 0 }));
+    detailsContainer.appendChild(combatGroup);
+
+    // --- Section Défense ---
+    const defenseGroup = createElement('div', { className: 'stats-group' });
+    defenseGroup.innerHTML = '<h4>Défense</h4>';
+    const armorReduction = (100 * (currentStats.armor + (changes.armor || 0)) / ((currentStats.armor + (changes.armor || 0)) + 200)).toFixed(0);
+    defenseGroup.appendChild(createStatLine('Armure', currentStats.armor, changes.armor, { tooltip: `Réduit les dégâts de ${armorReduction}%` }));
+    
+    const hpLine = createElement('p');
+    hpLine.classList.add('hero-hp-display');
+    const hpLabel = `<span>HP</span>`;
+    let hpValueHTML;
+    const roundedMaxHpChange = changes.maxHp ? Math.round(changes.maxHp) : 0;
+
+    if (changes.maxHp && roundedMaxHpChange !== 0) {
+        const finalMaxHp = Math.floor(currentStats.maxHp + changes.maxHp);
+        const sign = changes.maxHp > 0 ? '+' : '';
+        const changeClass = changes.maxHp > 0 ? 'stat-increase' : 'stat-decrease';
+        const changeText = ` <span class="${changeClass}">(${sign}${roundedMaxHpChange})</span>`;
+        hpValueHTML = `<span>${Math.ceil(hero.hp)}/${finalMaxHp}${changeText}</span>`;
+    } else {
+        const finalMaxHp = Math.floor(currentStats.maxHp + (changes.maxHp || 0));
+        hpValueHTML = `<span><span class="hero-current-hp">${Math.ceil(hero.hp)}</span>/${finalMaxHp}</span>`;
+    }
+    hpLine.innerHTML = hpLabel + hpValueHTML;
+    defenseGroup.appendChild(hpLine);
+
+    // CORRECTION: Application des décimales demandées
+    defenseGroup.appendChild(createStatLine('Régén. HP', currentStats.hpRegen, changes.hpRegen, { decimals: 1, tooltip: 'HP par seconde' }));
+    detailsContainer.appendChild(defenseGroup);
+
+    // --- Section Utilitaire ---
+    const utilityGroup = createElement('div', { className: 'stats-group' });
+    utilityGroup.innerHTML = '<h4>Utilitaire</h4>';
+    utilityGroup.appendChild(createStatLine('Vol de Vie', currentStats.lifeSteal, changes.lifeSteal, { isPercent: true, decimals: 1 }));
+    utilityGroup.appendChild(createStatLine('Épines', currentStats.thorns, changes.thorns));
+    utilityGroup.appendChild(createStatLine('Or trouvé', currentStats.goldFind, changes.goldFind, { isPercent: true, decimals: 0 }));
+    detailsContainer.appendChild(utilityGroup);
+
+    return detailsContainer;
 }
+
 
 function renderHeroBuffs(hero) {
     const buffsContainer = createElement('div', { className: 'buffs-container' });
@@ -94,7 +153,6 @@ function renderHeroEquipment(hero) {
     return equipmentDisplay;
 }
 
-// CORRIGÉ : La fonction crée maintenant des divs au lieu de <progress>
 function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip, eventBus) {
     const card = createElement('div', { className: 'hero-card', dataset: { heroId: hero.id } });
     if (isCollapsed) card.classList.add('collapsed');
@@ -134,12 +192,12 @@ function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip, even
     mainContent.appendChild(titleDiv);
     
     const collapsedInfo = createElement('div', { className: 'collapsed-info' });
-    collapsedInfo.appendChild(createElement('p', { className: 'hero-stats', textContent: `DPS: ${hero.dps.toFixed(1)}` }));
+    const dps = (hero.damage * hero.attackSpeed).toFixed(1);
+    collapsedInfo.appendChild(createElement('p', { className: 'hero-stats', textContent: `DPS: ${dps}` }));
     mainContent.appendChild(collapsedInfo);
 
-    mainContent.appendChild(renderHeroStatsGrid(hero, itemToEquip));
+    mainContent.appendChild(renderHeroDetails(hero, itemToEquip));
     
-    // Barre de HP
     const hpBarContainer = createElement('div', { className: 'progress-bar-container' });
     hpBarContainer.appendChild(createElement('div', { className: 'progress-bar-fill hp hero-hp-bar' }));
     mainContent.appendChild(hpBarContainer);
@@ -147,7 +205,6 @@ function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip, even
     mainContent.appendChild(renderHeroBuffs(hero));
     mainContent.appendChild(createElement('p', { className: 'hero-stats xp-text', textContent: `${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP` }));
     
-    // Barre d'XP
     const xpBarContainer = createElement('div', { className: 'progress-bar-container hero-xp-bar' });
     xpBarContainer.appendChild(createElement('div', { className: 'progress-bar-fill xp hero-xp-bar-fill' }));
     mainContent.appendChild(xpBarContainer);
@@ -170,40 +227,33 @@ function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip, even
     return card;
 }
 
-// CORRIGÉ : La fonction met à jour le style `width` de nos nouvelles barres
-// MODIFIÉ : La fonction met maintenant aussi à jour le texte de l'XP.
 export function updateHeroVitals(heroes) {
     heroes.forEach(hero => {
         const card = heroesAreaEl.querySelector(`.hero-card[data-hero-id="${hero.id}"]`);
         if (!card) return;
 
-        // Mise à jour de la barre de HP
         const hpPercent = (hero.hp / hero.maxHp) * 100;
         const hpBarFill = card.querySelector('.hero-hp-bar');
         if (hpBarFill) {
             hpBarFill.style.width = `${hpPercent}%`;
         }
 
-        // Mise à jour du texte des HP
-        const hpText = card.querySelector('.hero-hp-text');
-        if (hpText) {
-            hpText.textContent = `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}`;
+        const currentHpEl = card.querySelector('.hero-current-hp');
+        if (currentHpEl) {
+            currentHpEl.textContent = Math.ceil(hero.hp);
         }
 
-        // Mise à jour de la barre d'XP
         const xpPercent = (hero.xp / hero.xpToNextLevel) * 100;
         const xpBarFill = card.querySelector('.hero-xp-bar-fill');
         if (xpBarFill) {
             xpBarFill.style.width = `${xpPercent}%`;
         }
 
-        // NOUVEAU : Mise à jour du texte de l'XP pour assurer la synchronisation.
         const xpText = card.querySelector('.xp-text');
         if (xpText) {
             xpText.textContent = `${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP`;
         }
 
-        // Mise à jour de l'alerte visuelle pour les faibles HP
         if (hero.isFighting() && hpPercent < 25) {
             card.classList.add('is-low-hp');
         } else {

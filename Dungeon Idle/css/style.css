@@ -87,16 +87,51 @@ h3 { font-size: 1em; margin-top: 20px;}
 }
 .hero-main-content { flex-grow: 1; }
 .hero-stats { font-size: 0.9em; margin: 4px 0; color: #ddd; }
-.hero-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 .hero-controls { display: flex; flex-direction: column; margin-left: 10px; }
 .move-placeholder { height: 28px; }
 
+.hero-details-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.stats-group {
+    background-color: #2c2c2c;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+.stats-group h4 {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85em;
+    color: #ffd700;
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #555;
+    text-align: left;
+    font-weight: normal;
+}
+.stats-group p {
+    margin: 3px 0;
+    font-size: 0.85em;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    cursor: help;
+}
+.stats-group p span:first-child { color: #aaa; }
+.stats-group p span:last-child { color: #e0e0e0; font-weight: bold; }
+
+
+/* Logique de visibilité pour les vues réduites/étendues */
 .hero-card.dead, .hero-card.recovering { opacity: 0.5; background-color: #333; }
 .hero-card .collapsed-info { display: none; }
-.hero-card.collapsed .hero-stats-grid,
+.hero-card.collapsed .hero-details-container,
 .hero-card.collapsed .hero-xp-bar,
 .hero-card.collapsed .xp-text,
 .hero-card.collapsed .hero-equipment-display { display: none; }
+
 .hero-card.collapsed .collapsed-info { display: block; margin-top: 5px; }
 .hero-card.collapsed .hero-main-content { flex-grow: 0; width: 100%; }
 .hero-card.collapsed .hero-title { margin-bottom: 5px; }
@@ -115,10 +150,9 @@ h3 { font-size: 1em; margin-top: 20px;}
 
 .progress-bar-fill {
     height: 100%;
-    width: 0%; /* La largeur est contrôlée par JS */
-    transition: width 0.1s linear; /* Transition douce */
+    width: 0%;
+    transition: width 0.1s linear;
 }
-/* NOUVEAU : Classe pour désactiver la transition lors de l'initialisation. */
 .progress-bar-fill.no-transition {
     transition: none !important;
 }
@@ -128,7 +162,7 @@ h3 { font-size: 1em; margin-top: 20px;}
 .xp-text { font-size: 0.8em; color: #ccc; margin-bottom: 2px; }
 .monster-hp-container p { margin: 8px 0 4px 0; }
 
-.hero-equipment-display { font-size: 0.85em; margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+.hero-equipment-display { font-size: 0.85em; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
 .equipped-item { background: #222; padding: 3px 6px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* --- OBJETS & RARETÉ --- */
@@ -144,6 +178,8 @@ h3 { font-size: 1em; margin-top: 20px;}
 .rarity-rare { border-color: #ffd700; }
 .rarity-magic .item-name { color: #8ab4f8; }
 .rarity-rare .item-name { color: #fdd663; }
+
+/* COULEURS POUR LES COMPARAISONS DE STATS */
 .stat-increase { color: #4CAF50; }
 .stat-decrease { color: #F44336; }
 .stat-malus { color: #F44336; }
