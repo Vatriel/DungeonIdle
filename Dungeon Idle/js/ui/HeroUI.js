@@ -171,28 +171,39 @@ function createHeroCard(hero, index, heroesCount, isCollapsed, itemToEquip, even
 }
 
 // CORRIGÉ : La fonction met à jour le style `width` de nos nouvelles barres
+// MODIFIÉ : La fonction met maintenant aussi à jour le texte de l'XP.
 export function updateHeroVitals(heroes) {
     heroes.forEach(hero => {
         const card = heroesAreaEl.querySelector(`.hero-card[data-hero-id="${hero.id}"]`);
         if (!card) return;
 
+        // Mise à jour de la barre de HP
         const hpPercent = (hero.hp / hero.maxHp) * 100;
         const hpBarFill = card.querySelector('.hero-hp-bar');
         if (hpBarFill) {
             hpBarFill.style.width = `${hpPercent}%`;
         }
 
+        // Mise à jour du texte des HP
+        const hpText = card.querySelector('.hero-hp-text');
+        if (hpText) {
+            hpText.textContent = `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}`;
+        }
+
+        // Mise à jour de la barre d'XP
         const xpPercent = (hero.xp / hero.xpToNextLevel) * 100;
         const xpBarFill = card.querySelector('.hero-xp-bar-fill');
         if (xpBarFill) {
             xpBarFill.style.width = `${xpPercent}%`;
         }
 
-        const hpText = card.querySelector('.hero-hp-text');
-        if (hpText) {
-            hpText.textContent = `HP: ${Math.ceil(hero.hp)} / ${hero.maxHp}`;
+        // NOUVEAU : Mise à jour du texte de l'XP pour assurer la synchronisation.
+        const xpText = card.querySelector('.xp-text');
+        if (xpText) {
+            xpText.textContent = `${Math.floor(hero.xp)} / ${hero.xpToNextLevel} XP`;
         }
 
+        // Mise à jour de l'alerte visuelle pour les faibles HP
         if (hero.isFighting() && hpPercent < 25) {
             card.classList.add('is-low-hp');
         } else {

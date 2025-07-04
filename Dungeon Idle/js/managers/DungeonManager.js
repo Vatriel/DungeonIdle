@@ -163,18 +163,15 @@ function handleMonsterDefeated(state, eventBus) {
 
     if (wasBoss) {
         state.bossIsDefeated = true;
-        if (state.ui.autoProgressToNextFloor) {
-            advanceToNextFloor(state, eventBus);
-            return;
-        }
+        // SUPPRIMÉ : La condition pour avancer automatiquement à l'étage suivant a été retirée.
+        // L'avancement se fera désormais via le bouton "Étage Suivant".
     } else {
         // CORRECTION : La logique de déblocage du boss est revue pour être plus fiable.
         // On vérifie d'abord si la rencontre actuelle est celle qui débloque le boss.
         if (state.encounterIndex >= state.encountersPerFloor && !state.bossUnlockReached) {
             state.bossUnlockReached = true;
-            if (state.ui.autoProgressToBoss) {
-                state.pendingBossFight = true;
-            }
+            // SUPPRIMÉ : La condition pour passer automatiquement au boss a été retirée.
+            // Le joueur doit maintenant cliquer sur le bouton "Affronter le Boss".
         }
         // On incrémente ensuite le compteur pour la prochaine rencontre.
         state.encounterIndex++;

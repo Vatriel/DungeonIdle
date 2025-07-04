@@ -118,8 +118,10 @@ function setupEventListeners() {
         }
       }
     });
-    if (needsFullUpdate) state.ui.heroesNeedUpdate = true;
-    else state.ui.heroBarsNeedUpdate = true;
+    
+    if (needsFullUpdate) {
+        state.ui.heroesNeedUpdate = true;
+    }
   });
 
   eventBus.on('item_dropped', (data) => InventoryManager.addDroppedItem(state, data.item));
@@ -145,7 +147,6 @@ function setupEventListeners() {
 
   eventBus.on('floor_advanced', (data) => {
       state.dungeonFloor = data.newFloor;
-      // MODIFIÉ : On réinitialise à 1 pour la première rencontre.
       state.encounterIndex = 1;
       state.bossUnlockReached = false;
       state.bossIsDefeated = false;
@@ -186,7 +187,6 @@ function getNewGameState() {
         gold: 0,
         gameStatus: 'fighting',
         dungeonFloor: 1,
-        // MODIFIÉ : Le compteur commence à 1.
         encounterIndex: 1,
         encountersPerFloor: 10,
         encounterCooldown: 0,
@@ -203,15 +203,12 @@ function getNewGameState() {
         ui: {
             shopNeedsUpdate: true,
             heroesNeedUpdate: true,
-            heroBarsNeedUpdate: true,
             inventoryNeedsUpdate: true,
             lootNeedsUpdate: true,
             recruitmentNeedsUpdate: true,
             progressionNeedsUpdate: true,
             heroCardState: {},
             shopLockModeActive: false,
-            autoProgressToBoss: false,
-            autoProgressToNextFloor: false,
         },
         notifications: [],
         floatingTexts: [],
@@ -249,8 +246,10 @@ export function initGame() {
     state.eventBus = eventBus;
     const heroCardState = state.ui?.heroCardState || {};
     const shopLockModeActive = state.ui?.shopLockModeActive || false;
-    const autoProgressToBoss = state.ui?.autoProgressToBoss || false;
-    const autoProgressToNextFloor = state.ui?.autoProgressToNextFloor || false;
+    
+    // NOUVEAU : On s'assure que la variable existe, avec une valeur par défaut pour les anciennes sauvegardes.
+    // Cela corrige le bug qui empêchait de débloquer le boss sur les parties chargées.
+    state.encountersPerFloor = state.encountersPerFloor || 10;
     
     state.encounterCooldown = state.encounterCooldown || 0;
     state.bossUnlockReached = state.bossUnlockReached || false;
@@ -260,15 +259,12 @@ export function initGame() {
     state.ui = {
         shopNeedsUpdate: true,
         heroesNeedUpdate: true,
-        heroBarsNeedUpdate: false,
         inventoryNeedsUpdate: true,
         lootNeedsUpdate: true,
         recruitmentNeedsUpdate: true,
         progressionNeedsUpdate: true,
         heroCardState: heroCardState,
         shopLockModeActive: shopLockModeActive,
-        autoProgressToBoss: autoProgressToBoss,
-        autoProgressToNextFloor: autoProgressToNextFloor,
     };
     state.notifications = state.notifications || [];
     state.floatingTexts = [];
@@ -346,15 +342,6 @@ export function initGame() {
     }
   });
 
-  document.getElementById('auto-progression-controls').addEventListener('change', (event) => {
-    if (event.target.id === 'auto-boss-checkbox') {
-        state.ui.autoProgressToBoss = event.target.checked;
-    } else if (event.target.id === 'auto-floor-checkbox') {
-        state.ui.autoProgressToNextFloor = event.target.checked;
-    }
-  });
-
-  // MODIFIÉ : La logique de cet écouteur est corrigée pour que toutes les actions soient possibles.
   document.getElementById('heroes-area').addEventListener('click', (event) => {
     const target = event.target;
     
@@ -382,7 +369,6 @@ export function initGame() {
         return;
     }
 
-    // L'équipement d'objet n'est possible que si on n'a pas cliqué sur un autre bouton.
     if (state.itemToEquip) {
         event.preventDefault();
         const heroCard = target.closest('.hero-card');

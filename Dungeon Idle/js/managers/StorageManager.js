@@ -21,13 +21,13 @@ function save(state) {
             gameStatus: state.gameStatus,
             dungeonFloor: state.dungeonFloor,
             encounterIndex: state.encounterIndex,
-            
+            // NOUVEAU : Ajout de la variable à la sauvegarde pour éviter qu'elle soit perdue.
+            encountersPerFloor: state.encountersPerFloor,
+
             // Données de l'interface utilisateur et timers
             ui: {
                 heroCardState: state.ui.heroCardState,
                 shopLockModeActive: state.ui.shopLockModeActive,
-                autoProgressToBoss: state.ui.autoProgressToBoss,
-                autoProgressToNextFloor: state.ui.autoProgressToNextFloor,
             },
             autosaveTimer: state.autosaveTimer,
             shopRestockTimer: state.shopRestockTimer,
@@ -40,7 +40,6 @@ function save(state) {
                 id: hero.id,
                 level: hero.level,
                 xp: hero.xp,
-                // CORRECTION : Ajout de la sauvegarde de l'XP nécessaire pour le prochain niveau.
                 xpToNextLevel: hero.xpToNextLevel,
                 status: hero.status,
                 equipment: hero.equipment,
@@ -122,7 +121,6 @@ function load() {
                     break;
             }
 
-            // Object.assign va maintenant correctement restaurer xpToNextLevel depuis la sauvegarde.
             Object.assign(hero, heroData);
 
             for (const slot in hero.equipment) {

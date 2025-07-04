@@ -17,7 +17,7 @@ const gameStatusMessageEl = document.getElementById('game-status-message');
 const floorDisplayEl = document.getElementById('floor-display');
 const encounterDisplayEl = document.getElementById('encounter-display');
 const progressionControlsEl = document.getElementById('progression-controls');
-const autoProgressionControlsEl = document.getElementById('auto-progression-controls');
+// SUPPRIMÉ : La constante pour le conteneur des contrôles automatiques a été retirée.
 
 let lastRenderedMonsterInstanceId = null;
 
@@ -162,17 +162,7 @@ function updateProgressionUI(state) {
     progressionControlsEl.appendChild(createElement('button', { textContent: 'Étage Suivant', id: 'next-floor-btn' }));
   }
 
-  autoProgressionControlsEl.innerHTML = '';
-  
-  const autoBossLabel = createElement('label', { className: 'auto-control-label' });
-  autoBossLabel.appendChild(createElement('input', { type: 'checkbox', id: 'auto-boss-checkbox', checked: state.ui.autoProgressToBoss }));
-  autoBossLabel.appendChild(document.createTextNode(' Passer au boss'));
-  autoProgressionControlsEl.appendChild(autoBossLabel);
-
-  const autoFloorLabel = createElement('label', { className: 'auto-control-label' });
-  autoFloorLabel.appendChild(createElement('input', { type: 'checkbox', id: 'auto-floor-checkbox', checked: state.ui.autoProgressToNextFloor }));
-  autoFloorLabel.appendChild(document.createTextNode(" Passer à l'étage suivant"));
-  autoProgressionControlsEl.appendChild(autoFloorLabel);
+  // SUPPRIMÉ : Toute la logique de création des cases à cocher a été retirée.
 }
 
 export function updateUI(state, dt, oldState) {
