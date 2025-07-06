@@ -11,7 +11,8 @@ export const MONSTER_DEFINITIONS = {
     baseAttackSpeed: 1.2,
     // CONFIGURATION D'APPARITION
     appearsAtFloor: 1,
-    groupSize: { base: 2, perFloor: 0.5, random: 3 }
+    groupSize: { base: 2, perFloor: 0.5, random: 3 },
+    isFixedGroupSize: false // Par défaut, la taille du groupe n'est pas fixe
   },
   ORC: {
     id: 'orc',
@@ -23,7 +24,8 @@ export const MONSTER_DEFINITIONS = {
     baseAttackSpeed: 0.8,
     // CONFIGURATION D'APPARITION
     appearsAtFloor: 3,
-    groupSize: { base: 1, perFloor: 0.33, random: 2 }
+    groupSize: { base: 1, perFloor: 0.33, random: 2 },
+    isFixedGroupSize: false
   },
   SKELETON: {
     id: 'skeleton',
@@ -35,7 +37,8 @@ export const MONSTER_DEFINITIONS = {
     baseAttackSpeed: 1.0,
     // CONFIGURATION D'APPARITION
     appearsAtFloor: 5,
-    groupSize: { base: 2, perFloor: 0.2, random: 3 }
+    groupSize: { base: 2, perFloor: 0.2, random: 3 },
+    isFixedGroupSize: false
   },
   GHOUL: {
     id: 'ghoul',
@@ -47,7 +50,8 @@ export const MONSTER_DEFINITIONS = {
     baseAttackSpeed: 1.1,
     // CONFIGURATION D'APPARITION
     appearsAtFloor: 10,
-    groupSize: { base: 1, perFloor: 0.125, random: 1 }
+    groupSize: { base: 1, perFloor: 0.125, random: 1 },
+    isFixedGroupSize: false
   },
   STONE_GOLEM: {
     id: 'stone_golem',
@@ -59,6 +63,8 @@ export const MONSTER_DEFINITIONS = {
     baseAttackSpeed: 0.5,
     // CONFIGURATION D'APPARITION
     appearsAtFloor: 15,
-    groupSize: { base: 1, perFloor: 0, random: 1 }
+    groupSize: { base: 1, perFloor: 0, random: 1 },
+    isFixedGroupSize: true // Ce monstre a une taille de groupe fixe et ne sera pas affecté par le scaling des groupes
   }
 };
+

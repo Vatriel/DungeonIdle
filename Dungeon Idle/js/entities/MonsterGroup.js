@@ -1,34 +1,49 @@
 // js/entities/MonsterGroup.js
 
-export class MonsterGroup {
-  constructor(scaledDef, count) {
-    this.name = scaledDef.name;
-    this.level = scaledDef.level;
-    this.initialCount = count;
-    this.instanceId = crypto.randomUUID();
-    this.baseDefinition = scaledDef;
-    this.attackTimer = 0; // Timer pour gérer le cooldown d'attaque
+import { Enemy } from './Enemy.js'; // Importe la classe de base Enemy
 
-    this.hpPerMonster = scaledDef.baseHp;
-    this.totalMaxHp = this.hpPerMonster * this.initialCount;
-    this.currentHp = this.totalMaxHp;
-    this.currentCount = this.initialCount;
+export class MonsterGroup extends Enemy {
+  constructor(scaledDef, count) {
+    // Appelle le constructeur de la classe parente Enemy
+    super(scaledDef.name, scaledDef.level); 
+
+    this.initialCount = count; // Nombre initial de monstres dans le groupe
+    this.baseDefinition = scaledDef; // Définition de base du monstre (avec stats scalées)
+
+    this.hpPerMonster = scaledDef.baseHp; // HP par monstre individuel
+    this.totalMaxHp = this.hpPerMonster * this.initialCount; // HP total du groupe
+    this.currentHp = this.totalMaxHp; // HP actuels du groupe
+    this.currentCount = this.initialCount; // Nombre actuel de monstres en vie dans le groupe
   }
 
+  /**
+   * Inflige des dégâts au groupe de monstres.
+   * Met à jour les HP totaux et le nombre de monstres en vie.
+   * @param {number} amount - La quantité de dégâts à infliger.
+   */
   takeDamage(amount) {
     this.currentHp = Math.max(0, this.currentHp - amount);
-    this.updateCount();
+    this.updateCount(); // Met à jour le nombre de monstres en vie après avoir pris des dégâts
   }
 
+  /**
+   * Met à jour le nombre de monstres vivants dans le groupe en fonction des HP restants.
+   */
   updateCount() {
     if (!this.isAlive()) {
-      this.currentCount = 0;
+      this.currentCount = 0; // Si le groupe est mort, le compte est zéro
       return;
     }
+    // Calcule le nombre de monstres en vie en arrondissant au plafond (un monstre même avec 1 HP compte comme entier)
     this.currentCount = Math.ceil(this.currentHp / this.hpPerMonster);
   }
 
+  /**
+   * Vérifie si le groupe de monstres est toujours en vie.
+   * @returns {boolean} True si le groupe a encore des HP, false sinon.
+   */
   isAlive() {
     return this.currentHp > 0;
   }
 }
+

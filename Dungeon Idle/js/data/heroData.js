@@ -6,7 +6,7 @@ export const HERO_DEFINITIONS = {
         cost: 0,
         status: 'recruited',
         damageType: 'physical',
-        defaultDamageScaling: { str: 1.0, dex: 1.0 },
+        // defaultDamageScaling a été retiré car il n'était pas utilisé et le scaling est géré directement dans Hero.js
         baseDamage: 4,
         baseAttackSpeed: 1.2,
         baseStrength: 8,
@@ -24,7 +24,7 @@ export const HERO_DEFINITIONS = {
         cost: 100,
         status: 'locked',
         damageType: 'physical',
-        defaultDamageScaling: { str: 2.0 },
+        // defaultDamageScaling a été retiré
         baseDamage: 10,
         baseAttackSpeed: 0.8,
         baseStrength: 12,
@@ -45,7 +45,7 @@ export const HERO_DEFINITIONS = {
         cost: 0,
         status: 'locked',
         damageType: 'magical',
-        defaultDamageScaling: { int: 2.0 },
+        // defaultDamageScaling a été retiré
         baseDamage: 18,
         baseAttackSpeed: 0.6,
         baseStrength: 4,
@@ -63,8 +63,8 @@ export const HERO_DEFINITIONS = {
         cost: 10000,
         status: 'locked',
         damageType: 'magical',
-        defaultDamageScaling: { int: 0 },
-        baseDamage: 0,
+        // defaultDamageScaling a été retiré
+        baseDamage: 0, // Le prêtre ne fait pas de dégâts, il est un support pur.
         baseAttackSpeed: 1.0,
         baseStrength: 6,
         baseDexterity: 5,
@@ -75,10 +75,11 @@ export const HERO_DEFINITIONS = {
         intelligencePerLevel: 2,
         endurancePerLevel: 2,
         baseHealPerSecond: 5,
-        baseBuffChance: 0.2,
+        baseBuffChance: 0.2, // Renommé en baseBuffFrequency dans Priest.js pour plus de clarté
         baseBuffDuration: 5,
         allowedSubTypes: {
             arme: ['arme_sacre']
         }
     }
 };
+

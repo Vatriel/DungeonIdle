@@ -5,14 +5,12 @@ export const ITEM_DEFINITIONS = {
   SHORT_SWORD: {
     name: "Épée courte",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { str: 1.5, dex: 0.5 }, // Mixte, mais orienté Force
     stat: 'flatPhysicalDamage', baseValue: 3,
     possibleAffixes: ['strength', 'dexterity', 'attackSpeedPercent', 'critChance', 'critDamage'] 
   },
   WAR_STAFF: {
     name: "Bâton de guerre",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { int: 2.0 },
     stat: 'flatMagicalDamage', baseValue: 10,
     possibleAffixes: ['intelligence', 'critChance', 'critDamage', 'damagePercent'], 
     possibleMaluses: { armor: { chance: 0.6, magnitude: 0.8 } },
@@ -21,7 +19,6 @@ export const ITEM_DEFINITIONS = {
   PILGRIM_STAFF: {
     name: "Bâton de pèlerin",
     type: 'weapon', slot: 'arme', subType: 'arme_sacre',
-    damageScaling: { int: 0.5 }, // Le scaling de dégâts est très faible
     stat: 'healPower', baseValue: 8,
     possibleAffixes: ['intelligence', 'endurance', 'healPercent', 'hpRegen'],
     classRestriction: ['priest']
@@ -29,42 +26,36 @@ export const ITEM_DEFINITIONS = {
   LUMBERJACK_AXE: {
     name: "Hache de Bûcheron",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { str: 2.2 }, // Pure Force
     stat: 'flatPhysicalDamage', baseValue: 8,
     possibleAffixes: ['strength', 'critDamage', 'damagePercent']
   },
   THIEF_DAGGER: {
     name: "Dague de Voleur",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { dex: 1.8, str: 0.2 }, // Principalement Dextérité
     stat: 'attackSpeedPercent', baseValue: 10,
     possibleAffixes: ['dexterity', 'critChance', 'lifeSteal', 'flatPhysicalDamage']
   },
   IRON_WARHAMMER: {
     name: "Marteau de Guerre en Fer",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { str: 2.0 },
     stat: 'flatPhysicalDamage', baseValue: 6,
     possibleAffixes: ['strength', 'endurance', 'armor']
   },
   YEW_LONGBOW: {
     name: "Arc Long en If",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { dex: 2.0 }, // Pure Dextérité
     stat: 'flatPhysicalDamage', baseValue: 5,
     possibleAffixes: ['dexterity', 'critChance', 'attackSpeedPercent', 'damagePercent']
   },
   CONJURER_SCEPTER: {
     name: "Sceptre du Conjureur",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { int: 2.0 },
     stat: 'flatMagicalDamage', baseValue: 9,
     possibleAffixes: ['intelligence', 'critDamage', 'buffDuration']
   },
   DRIFTWOOD_WAND: {
     name: "Baguette en Bois Flotté",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
-    damageScaling: { int: 2.0 },
     stat: 'attackSpeedPercent', baseValue: 8,
     possibleAffixes: ['intelligence', 'critChance', 'damagePercent']
   },
@@ -224,3 +215,4 @@ export const AFFIX_DEFINITIONS = {
     buffPotency:         { text: "+X% Efficacité des Buffs", isPercent: true },
     buffDuration:        { text: "+X% Durée des Buffs", isPercent: true },
 };
+

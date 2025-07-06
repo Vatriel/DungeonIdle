@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dungeon Descent</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +25,6 @@
         <span id="floor-display"></span> | <span id="encounter-display"></span>
     </div>
     <div id="progression-controls"></div>
-    <!-- SUPPRIMÉ : Le conteneur pour les cases à cocher de progression automatique a été retiré. -->
     <div id="game-status-message"></div>
 
     <div id="game-world">
@@ -43,7 +43,6 @@
         <div id="enemy-panel" class="panel">
             <div id="monster-area">
                 <h2 id="monster-name"></h2>
-                <!-- CORRIGÉ : Remplacement de <progress> par une structure de divs -->
                 <div class="monster-hp-container">
                     <p id="monster-hp-text">HP: 0 / 0</p>
                     <div class="progress-bar-container">
@@ -74,6 +73,10 @@
 
     <div id="floating-text-container"></div>
 
+    <!-- La zone de notification sera créée dynamiquement par EffectsUI.js si elle n'existe pas -->
+    <!-- <div id="notification-area"></div> -->
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
+
