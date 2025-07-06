@@ -1,0 +1,165 @@
+/* css/components/_hero-card.css */
+/* Contient tous les styles spécifiques aux cartes de héros. */
+
+.hero-card.recovering { 
+    opacity: 0.5; 
+}
+.hero-card.is-low-hp { 
+    animation: pulse-red 1.5s infinite; 
+}
+.hero-card.drag-over {
+    background-color: #4a4a4a;
+    border-color: var(--color-gold);
+    transform: scale(1.02);
+}
+
+.hero-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    position: relative;
+    padding-right: 35px; /* Espace pour le bouton +/- */
+}
+.hero-main-content { 
+    flex-grow: 1; 
+    min-width: 0; /* Permet au contenu de rétrécir */
+}
+.hero-stats { 
+    font-size: 0.9em; 
+    margin: 4px 0; 
+    color: var(--color-text-primary); 
+}
+.hero-controls { 
+    display: flex; 
+    flex-direction: column; 
+    margin-left: 10px; 
+}
+.move-placeholder { 
+    height: 28px; 
+}
+
+/* --- Vue détaillée --- */
+.hero-details-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.stats-group {
+    background-color: #2c2c2c;
+    padding: 8px;
+    border: 1px solid var(--border-color-dark);
+    border-radius: 4px;
+}
+.stats-group h4 {
+    font-family: var(--font-secondary), monospace;
+    font-size: 0.85em;
+    color: var(--color-gold);
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color-light);
+    text-align: left;
+    font-weight: normal;
+}
+.stats-group p {
+    margin: 3px 0;
+    font-size: 0.85em;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    cursor: help;
+}
+.stats-group p span:first-child { 
+    color: var(--color-text-secondary); 
+}
+.stats-group p span:last-child { 
+    color: var(--color-text-primary); 
+    font-weight: bold; 
+}
+.stat-increase { color: var(--color-success); }
+.stat-decrease { color: var(--color-error); }
+
+/* --- Vue réduite (collapsed) --- */
+.hero-card.collapsed .hero-details-container,
+.hero-card.collapsed .hero-xp-bar,
+.hero-card.collapsed .xp-text,
+.hero-card.collapsed .hero-equipment-display,
+.hero-card.collapsed .buffs-container { 
+    display: none; 
+}
+.hero-card .collapsed-info { 
+    display: none; 
+}
+.hero-card.collapsed .collapsed-info { 
+    display: block; 
+    margin-top: 5px; 
+}
+.hero-card.collapsed { 
+    align-items: flex-start; 
+    padding-top: 5px; 
+    padding-bottom: 5px; 
+}
+.hero-card.collapsed .hero-controls { 
+    flex-direction: column; 
+    align-items: center; 
+    margin-left: auto; 
+}
+
+/* --- Équipement --- */
+.hero-equipment-display { 
+    font-size: 0.85em; 
+    margin-top: 10px; 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 2px 10px; 
+}
+.equipped-item { 
+    background: #222; 
+    padding: 3px 6px; 
+    margin-bottom: 2px; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    min-width: 0;
+}
+.equipped-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    text-align: left;
+    margin-right: 10px;
+    min-width: 0;
+}
+
+/* --- Buffs --- */
+.buffs-container { 
+    display: flex; 
+    gap: 4px; 
+    margin-top: 5px; 
+    min-height: 24px; 
+}
+.buff-icon { 
+    position: relative; 
+    width: 22px; 
+    height: 22px; 
+    background-color: #4f4f4f; 
+    border: 1px solid #888; 
+    border-radius: 4px; 
+    color: white; 
+    font-size: 12px; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: help; 
+    overflow: hidden; 
+}
+.buff-duration-bar { 
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    height: 3px; 
+    background-color: rgba(255, 255, 255, 0.6); 
+    transition: width 0.2s linear; 
+}

@@ -1,0 +1,101 @@
+/* css/components/_cards.css */
+/* Styles pour tous les types de cartes : héros, boutique, butin, inventaire, prestige. */
+
+/* --- Style de base commun à TOUTES les cartes --- */
+.hero-card, .shop-item-card, .loot-item-card, .inventory-item, .prestige-upgrade-card {
+    background-color: #333;
+    border: 2px solid #444;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+/* --- Styles pour les cartes qui utilisent flexbox (héros, boutique, butin) --- */
+.hero-card, .shop-item-card, .loot-item-card, .inventory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+}
+
+/* --- Contenu commun des cartes d'objets --- */
+.item-info { 
+    flex-grow: 1; 
+}
+.item-info p, .shop-item-info p { 
+    margin: 2px 0; 
+    font-size: 0.9em; 
+}
+.item-name { 
+    font-weight: bold; 
+}
+.item-stats { 
+    color: #a7d3a7; 
+}
+.item-affix { 
+    color: #b0c4de; 
+    font-style: italic; 
+    font-size: 0.85em; 
+}
+.stat-malus { 
+    color: #F44336; 
+}
+
+/* --- Rareté --- */
+.rarity-common { border-color: #666; }
+.rarity-magic { border-color: #61dafb; }
+.rarity-rare { border-color: #ffd700; }
+.rarity-legendary { border-color: #9b59b6; box-shadow: 0 0 10px 2px #9b59b6; }
+
+.rarity-magic .item-name { color: #8ab4f8; }
+.rarity-rare .item-name { color: #fdd663; }
+.rarity-legendary .item-name { color: #bb86fc; }
+
+/* --- Cartes spécifiques (hors héros) --- */
+
+/* Carte de Boutique & Butin */
+.shop-item-card.locked { 
+    border-color: #ffd700; 
+    box-shadow: 0 0 8px #ffd700; 
+}
+#shop-panel.lock-mode-active #shop-area .shop-item-card { 
+    cursor: pointer; 
+}
+.loot-item-card {
+    cursor: default; 
+    transition: transform 0.1s ease-in-out;
+}
+.loot-item-card:hover { 
+    transform: scale(1.03); 
+}
+
+/* Carte d'Inventaire */
+#inventory-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+    gap: 10px; 
+}
+.inventory-item:hover { 
+    transform: scale(1.03); 
+}
+.inventory-item.selected { 
+    box-shadow: 0 0 10px 3px #ffd700; 
+    transform: scale(1.03); 
+}
+.inventory-item.dragging { 
+    opacity: 0.5; 
+    border-style: dashed; 
+}
+
+/* Carte de Prestige */
+.prestige-upgrade-card h4 {
+    margin: 0 0 5px 0;
+    color: #ffd700;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1em;
+}
+.prestige-upgrade-card p {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: #ccc;
+}

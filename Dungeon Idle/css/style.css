@@ -15,7 +15,7 @@ h1 { font-size: 2em; }
 h2 { font-size: 1.2em; }
 h3 { font-size: 1em; margin-top: 20px;}
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 #game-world {
     display: flex;
@@ -29,8 +29,6 @@ h3 { font-size: 1em; margin-top: 20px;}
     color: #ffc107;
     min-height: 1.5em;
 }
-/* #auto-progression-controls a été supprimé du HTML et du CSS */
-/* .auto-control-label a été supprimé du HTML et du CSS */
 
 /* --- PANNEAUX & CONTENEURS --- */
 .panel {
@@ -43,10 +41,25 @@ h3 { font-size: 1em; margin-top: 20px;}
     min-height: 400px;
     position: relative;
 }
+#inventory-panel { width: 100%; margin: 0; min-height: auto; border: none; padding: 10px 0 0 0; }
 #shop-panel.lock-mode-active #shop-area .shop-item-card { cursor: pointer; }
-#inventory-panel { width: 90%; margin: 20px auto; min-height: 150px; }
 #loot-area { margin-top: 20px; }
 #enemy-panel { cursor: pointer; }
+
+#right-panels-container { padding: 0; overflow: hidden; }
+
+#currency-display {
+    text-align: left;
+    margin-bottom: 10px;
+}
+#currency-display p {
+    margin: 4px 0;
+}
+#soul-echos-display {
+    color: #e040fb;
+    font-weight: bold;
+}
+
 
 /* --- CARTES (Héros, Boutique, Butin) --- */
 .hero-card, .shop-item-card, .loot-item-card {
@@ -151,7 +164,31 @@ h3 { font-size: 1em; margin-top: 20px;}
 .monster-hp-container p { margin: 8px 0 4px 0; }
 
 .hero-equipment-display { font-size: 0.85em; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
-.equipped-item { background: #222; padding: 3px 6px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.equipped-item { 
+    background: #222; 
+    padding: 3px 6px; 
+    margin-bottom: 2px; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    min-width: 0; /* CORRIGÉ : Permet au conteneur de rétrécir correctement */
+}
+
+.equipped-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    text-align: left;
+    margin-right: 10px;
+    min-width: 0; /* CORRIGÉ : Permet au nom de l'objet de rétrécir et d'être tronqué */
+}
+.unequip-btn {
+    flex-shrink: 0;
+    padding: 2px 5px; 
+    margin-left: 8px; 
+}
+
 
 /* --- OBJETS & RARETÉ --- */
 .item-info { flex-grow: 1; text-align: left; }
@@ -166,8 +203,8 @@ h3 { font-size: 1em; margin-top: 20px;}
 .rarity-rare { border-color: #ffd700; }
 .rarity-magic .item-name { color: #8ab4f8; }
 .rarity-rare .item-name { color: #fdd663; }
-.rarity-legendary { border-color: #9b59b6; box-shadow: 0 0 10px 2px #9b59b6; } /* Nouvelle rareté */
-.rarity-legendary .item-name { color: #bb86fc; } /* Couleur du nom pour légendaire */
+.rarity-legendary { border-color: #9b59b6; box-shadow: 0 0 10px 2px #9b59b6; } 
+.rarity-legendary .item-name { color: #bb86fc; } 
 
 
 /* COULEURS POUR LES COMPARAISONS DE STATS */
@@ -176,37 +213,87 @@ h3 { font-size: 1em; margin-top: 20px;}
 .stat-malus { color: #F44336; }
 
 /* --- INVENTAIRE --- */
-#inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
-.inventory-item-container { position: relative; }
-.inventory-item { width: 100%; height: 60px; border: 2px solid #666; background-color: #333; display: flex; justify-content: center; align-items: center; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-.inventory-item:hover { transform: scale(1.1); }
-.inventory-item.rarity-magic { border-color: #8ab4f8; color: #8ab4f8; }
-.inventory-item.rarity-rare { border-color: #fdd663; color: #fdd663; }
-.inventory-item.legendary { border-color: #bb86fc; color: #bb86fc; } /* Style légendaire pour l'inventaire */
-.inventory-item.selected { box-shadow: 0 0 10px 3px #ffd700; transform: scale(1.1); }
+#inventory-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+    gap: 10px; 
+}
+.inventory-item {
+    background-color: #333;
+    border: 2px solid #666;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.inventory-item:hover { transform: scale(1.03); }
+.inventory-item.rarity-magic { border-color: #8ab4f8; }
+.inventory-item.rarity-rare { border-color: #fdd663; }
+.inventory-item.rarity-legendary { border-color: #bb86fc; }
+.inventory-item.selected { box-shadow: 0 0 10px 3px #ffd700; transform: scale(1.03); }
+.inventory-item .item-actions {
+    display: flex;
+    flex-direction: column;
+}
+.inventory-item .inventory-discard-btn {
+    padding: 8px 12px;
+}
+
 
 /* --- BOUTONS --- */
-.shop-header-controls { position: absolute; top: 10px; right: 15px; display: flex; gap: 10px; align-items: center; }
+/* CORRIGÉ : Positionnement des contrôles de la boutique */
+.shop-header-controls { 
+    position: absolute; 
+    top: 15px; /* Descendu pour ne pas chevaucher le titre */
+    right: 15px; 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
 .item-actions { display: flex; flex-direction: column; align-items: flex-end; margin-left: 10px; }
 button { font-family: 'Press Start 2P', cursive; font-size: 0.7em; border: 2px solid #444; border-top-color: #666; border-left-color: #666; background-color: #333; color: #e0e0e0; padding: 8px 12px; cursor: pointer; }
-button:hover { background-color: #444; }
-button:active { border-top-color: #444; border-left-color: #444; border-bottom-color: #666; border-right-color: #666; }
+button:hover:not(:disabled) { background-color: #444; }
+button:active:not(:disabled) { border-top-color: #444; border-left-color: #444; border-bottom-color: #666; border-right-color: #666; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
 .item-action-btn { padding: 8px 12px; }
+
+.utility-icon-btn {
+    font-size: 1.2em;
+    padding: 5px 8px;
+    background: none;
+    border: 2px solid #555;
+}
+.utility-icon-btn:hover {
+    border-color: #777;
+    color: #fff;
+}
+
 
 .move-hero-btn { font-size: 1.2em; padding: 2px 8px; margin: 2px 0; }
 .hero-card.collapsed .move-hero-btn { font-size: 1em; padding: 0 5px; }
 .toggle-view-btn { position: absolute; top: 0; right: 0; font-size: 1em; padding: 0 5px; }
 
 .buy-btn { background-color: #ffd700; color: #1a1a1a; }
-.buy-btn:hover { background-color: #ffec80; }
+.buy-btn:hover:not(:disabled) { background-color: #ffec80; }
 .pickup-btn { background-color: #28a745; color: white; }
 .pickup-btn:hover { background-color: #218838; }
 .discard-btn { background-color: #dc3545; color: white; }
 .discard-btn:hover { background-color: #c82333; }
-.inventory-discard-btn { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 1; text-align: center; padding: 0; }
-.unequip-btn { padding: 2px 5px; margin-left: 8px; }
-#reset-game-btn { background-color: #dc3545; color: white; box-shadow: none; }
-#reset-game-btn:hover { background-color: #c82333; }
+
+#soft-reset-btn { background-color: #dc3545; color: white; box-shadow: none; }
+#soft-reset-btn:hover { background-color: #c82333; }
+
+#prestige-btn {
+    background-color: #9b59b6;
+    color: white;
+    box-shadow: 0 0 8px #9b59b6;
+}
+#prestige-btn:hover {
+    background-color: #8e44ad;
+}
+
 
 .refresh-shop-btn { border: none; background: none; color: #D4AF37; font-size: 1.8em; padding: 0; line-height: 1; text-shadow: 0 0 8px rgba(255, 215, 0, 0.7); transition: transform 0.3s ease-in-out, text-shadow 0.2s; }
 .refresh-shop-btn:hover:not(:disabled) { transform: rotate(180deg); }
@@ -227,7 +314,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
 
-#game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; }
+#game-utility-controls { position: fixed; top: 15px; left: 20px; z-index: 2000; display: flex; gap: 10px;}
 #save-indicator { position: fixed; top: 15px; right: 20px; background-color: #282c34; color: white; padding: 8px 15px; border-radius: 5px; border: 1px solid #61dafb; display: flex; align-items: center; font-size: 1em; opacity: 1; transition: opacity 0.5s ease-in-out; z-index: 1000; }
 #save-indicator.hidden { opacity: 0; pointer-events: none; }
 #save-indicator .icon { margin-right: 10px; font-size: 1.2em; }
@@ -238,6 +325,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
 .notification.show { opacity: 1; transform: translateY(0); }
 .notification.error { background-color: #c82333; border: 1px solid #dc3545; }
 .notification.success { background-color: #218838; border: 1px solid #28a745; }
+.notification.riposte { background-color: #8e44ad; border: 1px solid #9b59b6; }
 
 /* --- BUFFS --- */
 .buffs-container { display: flex; gap: 4px; margin-top: 5px; min-height: 24px; }
@@ -268,7 +356,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
     transform: scale(1.02);
 }
 
-/* --- Modal de Confirmation Personnalisée --- */
+/* --- MODALES (Confirmation & Options) --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -279,7 +367,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Assure que la modal est au-dessus de tout */
+    z-index: 9999; 
 }
 
 .modal-content {
@@ -299,6 +387,7 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
     margin-bottom: 20px;
     font-size: 1.1em;
     color: #e0e0e0;
+    white-space: pre-wrap;
 }
 
 .modal-buttons {
@@ -312,4 +401,107 @@ button:active { border-top-color: #444; border-left-color: #444; border-bottom-c
     padding: 10px 15px;
     min-width: 100px;
 }
+.options-modal {
+    max-width: 600px;
+    text-align: left;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+.modal-header h2 {
+    margin: 0;
+}
+.close-btn {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.2em;
+    background: none;
+    border: none;
+    padding: 5px 10px;
+}
 
+.option-wrapper {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+.option-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.option-wrapper label {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.option-wrapper .option-help {
+    font-size: 0.9em;
+    color: #aaa;
+    margin: 4px 0 0 0;
+}
+
+
+/* Styles pour les onglets */
+.tab-buttons {
+    display: flex;
+    border-bottom: 4px solid #555;
+}
+.tab-btn {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 0.8em;
+    border: none;
+    border-bottom: 4px solid transparent;
+    background-color: #2a2a2a;
+    margin-bottom: -4px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.tab-btn:hover {
+    background-color: #3a3a3a;
+}
+.tab-btn.active {
+    background-color: #333;
+    border-color: #61dafb;
+    color: #61dafb;
+}
+
+.tab-content {
+    display: none;
+    padding: 15px;
+    position: relative; /* CORRIGÉ : Assure que les contrôles de la boutique sont positionnés correctement */
+}
+.tab-content.active {
+    display: block;
+}
+
+/* Styles pour le panneau de prestige */
+#prestige-panel h2 {
+    margin-top: 0;
+}
+.prestige-upgrade-card {
+    background-color: #333;
+    border: 1px solid #444;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+.prestige-upgrade-card h4 {
+    margin: 0 0 5px 0;
+    color: #ffd700;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1em;
+}
+.prestige-upgrade-card p {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: #ccc;
+}
+.prestige-upgrade-card .buy-btn {
+    width: 100%;
+}

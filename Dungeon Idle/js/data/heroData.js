@@ -6,7 +6,6 @@ export const HERO_DEFINITIONS = {
         cost: 0,
         status: 'recruited',
         damageType: 'physical',
-        // defaultDamageScaling a été retiré car il n'était pas utilisé et le scaling est géré directement dans Hero.js
         baseDamage: 4,
         baseAttackSpeed: 1.2,
         baseStrength: 8,
@@ -24,7 +23,6 @@ export const HERO_DEFINITIONS = {
         cost: 100,
         status: 'locked',
         damageType: 'physical',
-        // defaultDamageScaling a été retiré
         baseDamage: 10,
         baseAttackSpeed: 0.8,
         baseStrength: 12,
@@ -45,7 +43,6 @@ export const HERO_DEFINITIONS = {
         cost: 0,
         status: 'locked',
         damageType: 'magical',
-        // defaultDamageScaling a été retiré
         baseDamage: 18,
         baseAttackSpeed: 0.6,
         baseStrength: 4,
@@ -63,8 +60,7 @@ export const HERO_DEFINITIONS = {
         cost: 10000,
         status: 'locked',
         damageType: 'magical',
-        // defaultDamageScaling a été retiré
-        baseDamage: 0, // Le prêtre ne fait pas de dégâts, il est un support pur.
+        baseDamage: 0,
         baseAttackSpeed: 1.0,
         baseStrength: 6,
         baseDexterity: 5,
@@ -75,11 +71,32 @@ export const HERO_DEFINITIONS = {
         intelligencePerLevel: 2,
         endurancePerLevel: 2,
         baseHealPerSecond: 5,
-        baseBuffChance: 0.2, // Renommé en baseBuffFrequency dans Priest.js pour plus de clarté
+        baseBuffChance: 0.2,
         baseBuffDuration: 5,
         allowedSubTypes: {
             arme: ['arme_sacre']
         }
+    },
+    // NOUVEAU : Définition du Duelliste
+    DUELIST: {
+        id: 'duelist',
+        name: 'Duelliste',
+        cost: 50000, // Coût élevé pour un héros d'élite
+        status: 'locked', // Débloqué via le prestige
+        damageType: 'physical',
+        baseDamage: 15,
+        baseAttackSpeed: 1.5, // Très rapide
+        baseStrength: 10,
+        baseDexterity: 14, // Statistique principale
+        baseIntelligence: 4,
+        baseEndurance: 5, // Très fragile
+        strengthPerLevel: 2,
+        dexterityPerLevel: 3,
+        intelligencePerLevel: 0,
+        endurancePerLevel: 1,
+        baseRiposteChance: 0.05, // 5% de chance de base
+        allowedSubTypes: {
+            arme: ['arme_dps'] // Peut utiliser les mêmes armes que les autres combattants physiques
+        }
     }
 };
-

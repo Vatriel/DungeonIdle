@@ -2,15 +2,13 @@
 
 /**
  * Définit les conditions de déblocage pour chaque héros.
- * Chaque condition est une fonction qui retourne un booléen.
- * C'est une approche "data-driven" qui est facile à étendre.
  */
 const UNLOCK_CONDITIONS = {
     WARRIOR: (state) => state.gold >= state.heroDefinitions.WARRIOR.cost,
     MAGE: (state) => state.dungeonFloor >= 2,
     PRIEST: (state) => state.dungeonFloor >= 11,
-    // Ajoutez ici les futurs héros et leurs conditions
-    // EXEMPLE: RANGER: (state) => state.dungeonFloor >= 5 && state.heroes.length >= 3,
+    // NOUVEAU : Condition de déblocage pour le Duelliste
+    DUELIST: (state) => state.duelistUnlockedByPrestige && state.dungeonFloor >= 15,
 };
 
 /**
@@ -24,14 +22,12 @@ function checkUnlocks(state, eventBus) {
     for (const heroId in UNLOCK_CONDITIONS) {
         const heroDef = state.heroDefinitions[heroId];
 
-        // On vérifie uniquement les héros qui sont encore 'locked'
         if (heroDef && heroDef.status === 'locked') {
             const isConditionMet = UNLOCK_CONDITIONS[heroId](state);
             
             if (isConditionMet) {
                 heroDef.status = 'available';
                 needsUIUpdate = true;
-                // On envoie une notification au joueur pour l'informer
                 eventBus.emit('notification_sent', { 
                     message: `${heroDef.name} est maintenant disponible au recrutement !`, 
                     type: 'success' 
@@ -41,7 +37,6 @@ function checkUnlocks(state, eventBus) {
     }
 
     if (needsUIUpdate) {
-        // Notifie l'UI que la zone de recrutement doit être redessinée.
         state.ui.recruitmentNeedsUpdate = true;
     }
 }

@@ -6,7 +6,7 @@ export const ITEM_DEFINITIONS = {
     name: "Épée courte",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
     stat: 'flatPhysicalDamage', baseValue: 3,
-    possibleAffixes: ['strength', 'dexterity', 'attackSpeedPercent', 'critChance', 'critDamage'] 
+    possibleAffixes: ['strength', 'dexterity', 'attackSpeedPercent', 'critChance', 'critDamage', 'riposteChance'] // NOUVEAU : riposteChance
   },
   WAR_STAFF: {
     name: "Bâton de guerre",
@@ -33,7 +33,15 @@ export const ITEM_DEFINITIONS = {
     name: "Dague de Voleur",
     type: 'weapon', slot: 'arme', subType: 'arme_dps',
     stat: 'attackSpeedPercent', baseValue: 10,
-    possibleAffixes: ['dexterity', 'critChance', 'lifeSteal', 'flatPhysicalDamage']
+    possibleAffixes: ['dexterity', 'critChance', 'lifeSteal', 'flatPhysicalDamage', 'riposteChance'] // NOUVEAU : riposteChance
+  },
+  // NOUVEAU : Rapière, une arme idéale pour le Duelliste
+  STEEL_RAPIER: {
+    name: "Rapière d'Acier",
+    type: 'weapon', slot: 'arme', subType: 'arme_dps',
+    stat: 'dexterity', baseValue: 8,
+    possibleAffixes: ['attackSpeedPercent', 'critChance', 'riposteChance', 'damagePercent'],
+    classRestriction: ['duelist']
   },
   IRON_WARHAMMER: {
     name: "Marteau de Guerre en Fer",
@@ -65,7 +73,7 @@ export const ITEM_DEFINITIONS = {
     name: "Armure de cuir",
     type: 'armor', slot: 'torse',
     stat: 'maxHp', baseValue: 15,
-    possibleAffixes: ['endurance', 'dexterity', 'armor', 'hpPercent', 'hpRegen']
+    possibleAffixes: ['endurance', 'dexterity', 'armor', 'hpPercent', 'hpRegen', 'riposteChance'] // NOUVEAU : riposteChance
   },
   PLATE_ARMOR: {
     name: "Armure de plaques",
@@ -87,7 +95,7 @@ export const ITEM_DEFINITIONS = {
     name: "Capuche de Rôdeur",
     type: 'armor', slot: 'tete',
     stat: 'dexterity', baseValue: 4,
-    possibleAffixes: ['critChance', 'goldFind']
+    possibleAffixes: ['critChance', 'goldFind', 'riposteChance'] // NOUVEAU : riposteChance
   },
   ACOLYTE_CIRCLET: {
     name: "Diadème d'Acolyte",
@@ -108,7 +116,7 @@ export const ITEM_DEFINITIONS = {
     name: "Braies en Cuir Souple",
     type: 'armor', slot: 'jambes',
     stat: 'maxHp', baseValue: 25,
-    possibleAffixes: ['endurance', 'dexterity', 'hpRegen']
+    possibleAffixes: ['endurance', 'dexterity', 'hpRegen', 'riposteChance'] // NOUVEAU : riposteChance
   },
 
   // --- NOUVEAUX GANTS ---
@@ -122,7 +130,7 @@ export const ITEM_DEFINITIONS = {
     name: "Gants de Chirurgien",
     type: 'armor', slot: 'mains',
     stat: 'attackSpeedPercent', baseValue: 6,
-    possibleAffixes: ['dexterity', 'critChance']
+    possibleAffixes: ['dexterity', 'critChance', 'riposteChance'] // NOUVEAU : riposteChance
   },
 
   // --- NOUVELLES BOTTES ---
@@ -136,7 +144,7 @@ export const ITEM_DEFINITIONS = {
     name: "Bottes de Voyage",
     type: 'armor', slot: 'pieds',
     stat: 'endurance', baseValue: 5,
-    possibleAffixes: ['hpRegen', 'goldFind']
+    possibleAffixes: ['hpRegen', 'goldFind', 'riposteChance'] // NOUVEAU : riposteChance
   },
   
   // --- BIJOUX EXISTANTS ---
@@ -165,7 +173,7 @@ export const ITEM_DEFINITIONS = {
     name: "Anneau d'Émeraude",
     type: 'jewelry', slot: 'ring',
     stat: 'dexterity', baseValue: 5,
-    possibleAffixes: ['critChance', 'attackSpeedPercent']
+    possibleAffixes: ['critChance', 'attackSpeedPercent', 'riposteChance'] // NOUVEAU : riposteChance
   },
   SAPPHIRE_RING: {
     name: "Anneau de Saphir",
@@ -209,10 +217,11 @@ export const AFFIX_DEFINITIONS = {
     lifeSteal:           { text: "+X% Vol de Vie", isPercent: true },
     thorns:              { text: "Renvoie X dégâts", isPercent: false },
     goldFind:            { text: "+X% Découverte d'Or", isPercent: true },
+    // NOUVEAU : Affixe pour le Duelliste
+    riposteChance:       { text: "+X% Chance de Riposte", isPercent: true },
     // Support
     healPower:           { text: "+X Puissance de Soin", isPercent: false },
     healPercent:         { text: "+X% Soin", isPercent: true },
     buffPotency:         { text: "+X% Efficacité des Buffs", isPercent: true },
     buffDuration:        { text: "+X% Durée des Buffs", isPercent: true },
 };
-
