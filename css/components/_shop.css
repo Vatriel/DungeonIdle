@@ -1,0 +1,166 @@
+/* css/components/_shop.css */
+
+.shop-items,
+.inventory-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.shop-actions {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.shop-header {
+    display: flex;
+    /* Aligne les éléments sur la ligne de base pour que le texte du titre et le timer soient bien alignés */
+    align-items: baseline; 
+    /* Espace les éléments du début à la fin, mais les éléments du début sont groupés */
+    justify-content: space-between; 
+    margin-bottom: 15px;
+    padding: 0 15px;
+    position: relative; /* Nécessaire pour le positionnement absolu des contrôles */
+}
+
+/* Nouveau style pour le groupe titre + timer */
+.shop-title-group {
+    display: flex;
+    align-items: baseline; /* Aligne le texte du titre et le timer */
+    gap: 10px; /* Espacement de 10px entre le titre et le timer */
+}
+
+.shop-header h2 {
+    margin: 0; /* Assure qu'il n'y a pas de marge supplémentaire sur le h2 */
+}
+
+.shop-header-controls {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.shop-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Centrer verticalement les éléments */
+    gap: 10px; /* Espace entre les éléments */
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si l'espace est insuffisant */
+}
+
+.shop-utility-btn {
+    background-color: var(--color-background-dark);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    padding: 8px 15px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 0.9em;
+    white-space: nowrap; /* Empêche le texte de se casser sur plusieurs lignes */
+}
+
+.shop-utility-btn:hover {
+    background-color: var(--color-surface);
+    border-color: var(--color-accent);
+}
+
+.shop-utility-btn.active {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 8px var(--color-gold);
+}
+
+/* Styles pour le timer de la boutique */
+.shop-restock-timer {
+    width: 30px; /* Taille du cercle */
+    height: 30px;
+    border-radius: 50%; /* Rendre l'élément circulaire */
+    background: var(--color-background-dark); /* Couleur de fond du cercle vide */
+    border: 2px solid var(--color-border); /* Bordure du cercle */
+    position: relative;
+    overflow: hidden; /* Cache le débordement du gradient */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em; /* Taille du texte du timer si on en ajoute un */
+    color: var(--color-text-secondary);
+    font-weight: bold;
+    /* Retiré le positionnement relatif ici car il est maintenant dans le flux de .shop-title-group */
+}
+
+.shop-restock-timer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    /* Le conic-gradient sera mis à jour par JS via une variable CSS */
+    background: conic-gradient(var(--color-accent) var(--timer-progress, 0%), transparent var(--timer-progress, 0%));
+    transform: rotate(-90deg); /* Commence le remplissage en haut */
+}
+
+.shop-item-card {
+    background-color: var(--color-surface-light);
+    position: relative;
+    padding-bottom: 1rem; /* Espace pour les affixes, pas pour un footer */
+}
+
+/* NOUVEAU : Positionnement du bouton d'achat en haut à droite */
+.shop-item-card .buy-item-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 6px 10px;
+    font-size: 0.8em;
+    background-color: var(--color-gold);
+    color: var(--color-background);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    z-index: 2; /* Pour être au-dessus du nom de l'objet si besoin */
+}
+
+.shop-item-card .buy-item-btn:hover:not(:disabled) {
+    background-color: #ffec80;
+}
+
+.shop-item-card .buy-item-btn:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Ajustement du header pour ne pas être caché par le bouton */
+.shop-item-card .item-card-header {
+    padding-right: 60px; /* Espace pour le bouton d'achat */
+}
+
+.shop-panel.lock-mode-active .shop-item-card {
+    cursor: pointer;
+}
+
+.shop-item-card.locked {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 8px var(--color-gold);
+    opacity: 0.8;
+}
+
+.shop-item-card .lock-icon {
+    position: absolute;
+    top: 5px;
+    left: 5px; /* Déplacé à gauche pour ne pas gêner le bouton d'achat */
+    font-size: 1.2em;
+    color: var(--color-gold);
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}

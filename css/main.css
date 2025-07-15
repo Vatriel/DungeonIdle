@@ -1,0 +1,29 @@
+/* Base styles, should be imported first */
+@import url('base/_variables.css');
+@import url('base/_base.css');
+
+/* Component styles */
+@import url('components/_buttons.css');
+@import url('components/_panels.css');
+@import url('components/_hero-card.css');
+@import url('components/_progress-bars.css');
+@import url('components/_notifications.css');
+@import url('components/_cards.css');
+
+/* --- MODIFIED MODAL IMPORTS --- */
+/* Import the new base styles for all modals */
+@import url('components/_modal-base.css'); 
+/* Import specific styles for each modal component */
+@import url('components/_options-modal.css');
+@import url('components/_tavern.css');
+@import url('components/_stats-modal.css');
+@import url('components/_progression-map.css');
+/* The old _modals.css file is no longer needed */
+
+/* Other component styles */
+@import url('components/_artisan.css');
+@import url('components/_shop.css');
+@import url('components/_prestige.css');
+@import url('components/_trophy-room.css');
+@import url('components/_tavern-upgrades.css');
+@import url('components/_tavern-recruitment.css');

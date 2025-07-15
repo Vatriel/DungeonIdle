@@ -1,0 +1,136 @@
+/* css/components/_tavern-upgrades.css */
+/* Styles pour les améliorations de la Taverne */
+
+.tavern-upgrades-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Une seule colonne par défaut, peut devenir 2 sur desktop */
+    gap: 20px;
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .tavern-upgrades-grid {
+        grid-template-columns: 1fr 1fr; /* Deux colonnes sur les écrans plus larges */
+    }
+}
+
+.upgrades-section {
+    background-color: var(--color-surface);
+    border: 1px solid var(--border-color-dark);
+    border-radius: 6px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.upgrades-section h4 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-gold);
+    color: var(--color-gold);
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.upgrades-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.upgrade-card {
+    background-color: var(--color-background-light);
+    border: 1px solid var(--border-color-light);
+    border-left: 5px solid var(--color-accent); /* Couleur par défaut */
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.upgrade-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.upgrade-card h5 {
+    margin: 0;
+    font-size: 1em;
+    color: var(--color-text-primary);
+    border-bottom: 1px dashed var(--border-color-dark);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.upgrade-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    flex-grow: 1;
+}
+
+.upgrade-cost {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: var(--color-gold);
+    margin-top: 5px;
+}
+
+.upgrade-buy-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.8em;
+    margin-top: 10px;
+}
+
+/* Styles spécifiques aux types d'améliorations */
+.free-upgrade {
+    border-left-color: var(--color-success);
+}
+.free-upgrade.owned {
+    background-color: var(--color-surface-light);
+    opacity: 0.8;
+}
+.free-upgrade.locked-condition {
+    opacity: 0.5;
+    filter: grayscale(80%);
+    border-left-color: var(--color-text-secondary);
+}
+
+.paid-upgrade {
+    border-left-color: var(--color-gold);
+}
+.paid-upgrade.locked-condition {
+    opacity: 0.5;
+    filter: grayscale(80%);
+    border-left-color: var(--color-text-secondary);
+}
+
+.upgrade-card.max-level {
+    opacity: 0.7;
+    filter: grayscale(50%);
+    border-left-color: var(--color-text-secondary);
+}
+.upgrade-card.max-level .upgrade-buy-btn {
+    display: none; /* Cache le bouton si niveau max atteint */
+}
+
+.upgrade-status {
+    font-size: 0.8em;
+    text-align: center;
+    padding: 5px;
+    margin-top: 5px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+.upgrade-status.locked-condition {
+    background-color: var(--color-error);
+    color: white;
+}
+.upgrade-status.max-level {
+    background-color: var(--color-text-secondary);
+    color: var(--color-background);
+}

@@ -1,0 +1,192 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Down Below</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="game-utility-controls">
+        <button id="options-btn" class="utility-icon-btn" title="Options">⚙️</button>
+        <button id="progression-map-btn" class="utility-icon-btn" title="Feuille de Route">🗺️</button>
+        <button id="tavern-btn" class="utility-icon-btn hidden" title="Accéder à la Taverne">🍺</button>
+        <button id="prestige-btn" class="hidden" title="Réinitialise votre progression pour des bonus permanents">Renaissance</button>
+    </div>
+
+    <h1>Deep Down Below</h1>
+    
+    <div id="save-indicator" class="hidden">
+        <span class="icon"></span>
+        <span class="text"></span>
+    </div>
+
+    <div id="dungeon-info" style="min-height: 80px;">
+        <span id="floor-display"></span> | <span id="encounter-display"></span>        
+    </div>
+    <div id="progression-controls"></div>
+    <div id="game-status-message"></div>
+
+    <div id="game-world">
+        <div id="party-panel" class="panel">
+            <div class="panel-header">
+                <h2>Aventuriers</h2>
+                <div id="party-scores-container">
+                    <div id="party-power-display" class="party-score-widget" title="Puissance globale estimée du groupe, basée sur les statistiques brutes.">
+                        ⚡ <span id="party-power-score">0</span>
+                    </div>
+                    <div id="party-combat-rating-display" class="party-score-widget" title="Score de Combat : mesure l'efficacité réelle du groupe sur les 60 dernières secondes (Dégâts x Survie).">
+                        ⚔️ <span id="party-combat-rating">0</span>
+                    </div>
+                </div>
+                <button id="boost-heal-btn" class="utility-icon-btn hidden" title="Soins d'urgence ! (accélère la récupération)">❤️</button>
+            </div>
+            <div id="currency-display">
+                <p>Or: <span id="player-gold">0</span></p>
+                <p class="hidden" id="soul-echos-container">Échos: <span id="soul-echos-display">0</span></p>
+            </div>
+            <hr>
+            <div id="heroes-area"></div>
+            <hr>
+            <!-- La section de recrutement des héros ici est maintenant gérée par la Taverne pour les nouveaux héros -->
+            <!-- Cette section pourrait être conservée pour des héros de base ou des recrutements initiaux si nécessaire -->
+            <div id="recruitment-section" class="hidden">
+                <h3>Recrutement</h3>
+                <div id="recruitment-area"></div>
+            </div>
+        </div>
+
+        <div id="enemy-panel" class="panel">
+            <!-- NOUVEAU : Bouton de pause/reprise -->
+            <button id="pause-game-btn" class="button pause-button">Pause après combat</button>
+            <div id="monster-area">
+                <h2 id="monster-name"></h2>
+                <div class="monster-hp-container">
+                    <p id="monster-hp-text">HP: 0 / 0</p>
+                    <div class="progress-bar-container">
+                        <div id="monster-hp-bar" class="progress-bar-fill hp"></div>
+                    </div>
+                </div>
+                <div id="loot-container">
+                    <div class="loot-header">
+                        <h4>Butin<span id="loot-counter" class="header-counter"></span></h4>
+                        <button id="pick-all-loot-button" class="btn">Ramasser tout</button>
+                    </div>
+                    <div id="loot-area"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="right-panels-container" class="panel">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="shop-panel">Marchand</button>
+                <button class="tab-btn" data-tab="inventory-panel">Inventaire</button>
+                <button id="artisan-tab-btn" class="tab-btn" data-tab="artisan-panel">Forge</button>
+                <button id="prestige-tab-btn" class="tab-btn hidden" data-tab="prestige-panel">Renaissance</button>
+            </div>
+
+            <div id="shop-panel" class="tab-content active">
+                <div class="shop-header">
+                    <div class="shop-title-group">
+                        <h2>Marchand</h2>
+                        <div id="shop-restock-timer-display" class="shop-restock-timer"></div> 
+                    </div>
+                    <div class="shop-header-controls">
+                        <button id="toggle-lock-mode-btn" class="shop-utility-btn" title="Activer/Désactiver le mode verrouillage">🔒</button>
+                        <button class="refresh-shop-btn" id="refresh-shop-btn" title="Rafraîchir la boutique">🔄</button>
+                        <button id="buy-all-shop-button" class="btn">Acheter tout</button>
+                    </div>
+                </div>
+                <div id="shop-area"></div>
+            </div>
+
+            <div id="inventory-panel" class="tab-content">
+                <div class="inventory-header">
+                    <h2>Inventaire<span id="inventory-counter" class="header-counter"></span></h2>
+                    <button id="auto-equip-btn" class="utility-btn">Équipement Auto</button>
+                </div>
+                <div class="inventory-controls">
+                    <label for="inventory-filter">Type:</label>
+                    <select id="inventory-filter">
+                        <option value="all">Tous</option>
+                        <option value="weapon">Armes</option>
+                        <option value="armor">Armures</option>
+                        <option value="jewelry">Bijoux</option>
+                        <option value="relic">Reliques</option>
+                    </select>
+                    <label for="inventory-sort">Trier par:</label>
+                    <select id="inventory-sort">
+                        <option value="rarity">Rareté</option>
+                        <option value="level">Niveau</option>
+                        <option value="name">Nom</option>
+                    </select>
+                    <input type="text" id="inventory-search" placeholder="Rechercher...">
+                </div>
+                <div id="inventory-grid"></div>
+            </div>
+            
+            <div id="artisan-panel" class="tab-content">
+            </div>
+            
+            <div id="prestige-panel" class="tab-content">
+                <h2>Autel de la Renaissance</h2>
+                <div id="prestige-cards-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="floating-text-container"></div>
+
+    <div id="tavern-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content tavern-modal-content">
+            <div class="modal-header">
+                <h2>La Taverne du Dragon Ivre</h2>
+                <button class="close-btn" id="close-tavern-modal-btn">X</button>
+            </div>
+            <div class="tavern-body">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="tavern-contracts">Contrats</button>
+                    <button class="tab-btn" data-tab="tavern-trophies">Trophées</button>
+                    <button class="tab-btn" data-tab="tavern-consumables">Marchandises</button>
+                    <button class="tab-btn" data-tab="tavern-upgrades">Améliorations</button>
+                    <button class="tab-btn" data-tab="tavern-recruitment">Recrutement</button> <!-- MODIFIÉ : Ajout de l'onglet recrutement -->
+                </div>
+                
+                <div id="tavern-contracts" class="tab-content active">
+                    <!-- Contenu généré par TavernUI.js -->
+                </div>
+                
+                <div id="tavern-trophies" class="tab-content">
+                    <!-- Contenu généré par TrophyUI.js -->
+                </div>
+                
+                <div id="tavern-consumables" class="tab-content">
+                    <p>Des potions, des parchemins, et bien plus pour vos expéditions !</p>
+                </div>
+
+                <div id="tavern-upgrades" class="tab-content">
+                    <p>Améliorez les services de la Taverne pour des bonus permanents !</p>
+                </div>
+                
+                <!-- NOUVEAU : Contenu de l'onglet Recrutement -->
+                <div id="tavern-recruitment" class="tab-content">
+                    <!-- Contenu généré par TavernUI.js -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="offline-progress-overlay" class="modal-overlay hidden">
+        <div class="offline-progress-content">
+            <h3 id="offline-progress-message">Calcul de la progression hors ligne...</h3>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

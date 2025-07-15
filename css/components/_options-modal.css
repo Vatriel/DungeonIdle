@@ -1,0 +1,65 @@
+/* css/components/_options-modal.css */
+/* Contient les styles spécifiques à la modale des Options. */
+
+/* Conteneur principal de la modale des options */
+.options-modal {
+    max-width: 600px;
+    text-align: left;
+}
+
+/* Conteneur pour une seule option (checkbox + texte) */
+.option-wrapper {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.option-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.option-wrapper label {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Texte d'aide sous le label de l'option */
+.option-wrapper .option-help {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    margin: 4px 0 0 0;
+}
+
+/* Section pour les actions potentiellement destructrices */
+.danger-zone {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 2px solid var(--color-error);
+}
+
+.danger-zone h3 {
+    color: var(--color-error);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.danger-zone .danger-btn {
+    width: 100%;
+    background-color: var(--color-error);
+    color: white;
+    padding: 12px;
+    font-size: 0.9em;
+    border: 1px solid #ff7979;
+}
+
+.danger-zone .danger-btn:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.danger-zone .danger-btn:hover {
+    background-color: #c82333;
+}

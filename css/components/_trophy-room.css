@@ -1,0 +1,110 @@
+/* css/components/_trophy-room.css */
+/* Styles pour la nouvelle Salle des Trophées dans la Taverne. */
+
+.trophy-room-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* S'assure que le contenu prend toute la largeur */
+    flex-grow: 1; /* Permet au contenu de s'étirer verticalement pour remplir l'espace */
+    gap: 15px;
+    min-height: 0; /* Correction classique pour les conteneurs flex imbriqués avec défilement */
+}
+
+.trophy-sets-container {
+    flex-shrink: 0; /* Empêche cette section de rétrécir */
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color-dark);
+}
+
+.trophy-sets-container h4 {
+    margin: 0 0 10px 0;
+    color: var(--color-gold);
+    text-align: center;
+}
+
+.trophy-set-list {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.trophy-set-item {
+    background-color: var(--color-surface);
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color-light);
+    font-size: 0.9em;
+    text-align: center;
+    opacity: 0.5; /* Grisé par défaut */
+}
+
+.trophy-set-item.unlocked {
+    opacity: 1;
+    border-color: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success);
+    color: var(--color-success);
+}
+
+.trophy-set-item .set-name {
+    font-weight: bold;
+}
+
+.trophy-set-item .set-bonus {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+}
+
+.trophy-collection-container {
+    flex-grow: 1; /* Prend l'espace restant */
+    min-height: 0; /* Nécessaire pour le scroll */
+    overflow-y: auto;
+}
+
+.trophy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 5px;
+}
+
+.trophy-card {
+    background-color: var(--color-surface-light);
+    border: 2px solid var(--border-color-dark);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.trophy-card.not-owned {
+    opacity: 0.4;
+    filter: grayscale(80%);
+}
+
+.trophy-card .trophy-name {
+    font-family: var(--font-primary);
+    font-size: 1em;
+    color: var(--color-text-primary);
+}
+
+.trophy-card .trophy-icon {
+    font-size: 2.5em;
+    margin: 10px 0;
+    /* On peut ajouter des icônes spécifiques plus tard */
+}
+
+.trophy-card .trophy-count {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+}
+
+.trophy-card .trophy-bonus {
+    font-weight: bold;
+    color: var(--color-accent);
+}

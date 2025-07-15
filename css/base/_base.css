@@ -1,0 +1,69 @@
+/* css/base/_base.css */
+/* Contient les styles globaux pour le body, la typographie, et la mise en page principale. */
+
+body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    font-family: 'Roboto Mono', monospace;
+    text-align: center;
+}
+
+h1, h2, h3 {
+    font-family: 'Press Start 2P', cursive;
+    color: #61dafb;
+    text-shadow: 0 0 5px rgba(97, 218, 251, 0.5);
+}
+h1 { font-size: 2em; }
+h2 { font-size: 1.2em; }
+h3 { font-size: 1em; margin-top: 20px;}
+
+.hidden { display: none !important; }
+
+#game-world {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+#game-status-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #ffc107;
+    min-height: 1.5em;
+}
+
+#currency-display {
+    text-align: left;
+    margin-bottom: 10px;
+}
+#currency-display p {
+    margin: 4px 0;
+}
+#soul-echos-display {
+    color: #e040fb;
+    font-weight: bold;
+}
+
+/* MODIFICATION : Positionnement des contrôles en haut à gauche */
+#game-utility-controls {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    z-index: 2000;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* NOUVEAU : Style pour le bouton de la Taverne */
+#tavern-btn {
+    background-color: var(--color-surface);
+    border-color: var(--border-color-light);
+    color: #8B4513; /* Couleur marron pour la bière/bois */
+    text-shadow: 0 0 5px rgba(139, 69, 19, 0.7);
+}
+#tavern-btn:hover {
+    background-color: var(--color-surface-light);
+    border-color: #A0522D; /* Couleur plus claire au survol */
+    color: #A0522D;
+}

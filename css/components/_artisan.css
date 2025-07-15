@@ -1,0 +1,168 @@
+/* css/components/_artisan.css */
+
+#artisan-panel.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* --- DÉBUT DE LA MODIFICATION --- */
+.artisan-resources {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.artisan-resources .essence-list {
+    text-align: left;
+    flex-grow: 1; 
+    min-width: 150px; 
+}
+
+/* NOUVEAU: Conteneur pour les boutons de recyclage */
+.artisan-recycle-buttons {
+    display: flex;
+    flex-direction: column; /* Empile les boutons verticalement */
+    gap: 10px; /* Espacement entre les boutons */
+    align-items: flex-start; /* MODIFIÉ: Aligne les boutons à gauche dans leur conteneur */
+}
+
+.artisan-resources p {
+    margin: 2px 0;
+    font-size: 0.9em;
+}
+
+.artisan-resources .btn {
+    padding: 6px 10px;
+    font-size: 0.7em;
+    flex-shrink: 0; 
+}
+/* --- FIN DE LA MODIFICATION --- */
+
+.artisan-main-layout {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 15px;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.artisan-inventory-column {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.artisan-inventory-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.artisan-inventory-header h3 {
+    margin: 0;
+}
+
+.artisan-inventory-grid {
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-right: 10px;
+}
+
+.artisan-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background-color: var(--color-surface-light);
+    border: 2px solid var(--border-color-dark);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.artisan-item-card:hover {
+    border-color: var(--color-gold);
+    transform: scale(1.02);
+}
+.artisan-item-card.selected {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+}
+
+.artisan-item-info {
+    font-size: 0.9em;
+}
+
+.artisan-workspace {
+    display: flex;
+    flex-direction: column;
+}
+
+.artisan-item-slot {
+    min-height: 120px;
+    background-color: var(--color-background);
+    border: 2px dashed var(--border-color-light);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.artisan-item-slot .placeholder {
+    color: var(--color-text-secondary);
+}
+
+.artisan-actions .tab-buttons {
+    border-bottom-color: var(--border-color-dark);
+}
+.artisan-actions .tab-btn {
+    background-color: var(--color-background);
+}
+.artisan-actions .tab-btn.active {
+    background-color: var(--color-surface);
+}
+
+.artisan-actions .tab-content {
+    padding: 15px;
+    background-color: var(--color-surface);
+}
+
+.artisan-action-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    margin-bottom: 15px;
+    min-height: 40px;
+}
+
+.artisan-reforge-affix-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    padding: 5px;
+}
+.artisan-reforge-affix-list li.locked {
+    opacity: 0.6;
+}
+.artisan-reforge-affix-list li button {
+    font-size: 0.8em;
+    padding: 4px 8px;
+}
+
+.artisan-cost {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.artisan-confirm-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    font-size: 1em;
+}

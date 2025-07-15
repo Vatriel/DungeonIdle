@@ -1,0 +1,153 @@
+/* css/components/_cards.css */
+/* Contient tous les styles spécifiques aux cartes d'objets. */
+
+.item-card {
+    background-color: var(--color-background-light);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.item-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.item-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+}
+
+.item-level {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.item-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem; 
+    flex-grow: 1;
+    text-align: left;
+}
+
+.item-stat-line {
+    font-size: 0.8em;
+    margin: 0;
+    text-align: left;
+}
+
+.item-stat-line.implicit-stat {
+    color: var(--color-accent);
+    font-style: italic;
+}
+
+.item-unique-effect {
+    font-style: italic;
+    color: var(--rarity-legendary);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color-light);
+}
+
+.item-card-footer {
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-cost {
+    font-weight: bold;
+    color: var(--color-gold);
+    margin: 0;
+}
+
+/* --- MODIFICATION : STYLES POUR LES 8 TIERS DE RARETÉ --- */
+.item-card.rarity-defective {
+    border: 1px solid var(--rarity-defective);
+    border-left: 5px solid var(--rarity-defective);
+}
+.item-card.rarity-defective .item-name { color: var(--rarity-defective); }
+
+.item-card.rarity-common {
+    border: 1px solid var(--rarity-common);
+    border-left: 5px solid var(--rarity-common);
+}
+.item-card.rarity-common .item-name { color: var(--rarity-common); }
+
+.item-card.rarity-magic {
+    border: 1px solid var(--rarity-magic);
+    border-left: 5px solid var(--rarity-magic);
+}
+.item-card.rarity-magic .item-name { color: var(--rarity-magic); }
+
+.item-card.rarity-rare {
+    border: 1px solid var(--rarity-rare);
+    border-left: 5px solid var(--rarity-rare);
+}
+.item-card.rarity-rare .item-name { color: var(--rarity-rare); }
+
+.item-card.rarity-epic {
+    border: 1px solid var(--rarity-epic);
+    border-left: 5px solid var(--rarity-epic);
+}
+.item-card.rarity-epic .item-name { color: var(--rarity-epic); }
+
+.item-card.rarity-legendary {
+    border: 1px solid var(--rarity-legendary);
+    border-left: 5px solid var(--rarity-legendary);
+    animation: legendary-glow 2s infinite alternate;
+}
+.item-card.rarity-legendary .item-name { color: var(--rarity-legendary); }
+
+.item-card.rarity-mythic {
+    border: 1px solid var(--rarity-mythic);
+    border-left: 5px solid var(--rarity-mythic);
+    animation: mythic-glow 1.8s infinite alternate;
+}
+.item-card.rarity-mythic .item-name { color: var(--rarity-mythic); }
+
+.item-card.rarity-artifact {
+    border: 1px solid var(--rarity-artifact);
+    border-left: 5px solid var(--rarity-artifact);
+    animation: artifact-glow 1.5s infinite alternate;
+}
+.item-card.rarity-artifact .item-name { color: var(--rarity-artifact); }
+
+
+@keyframes legendary-glow {
+    from { box-shadow: 0 0 5px 0px var(--rarity-legendary); }
+    to   { box-shadow: 0 0 15px 5px var(--rarity-legendary); }
+}
+
+@keyframes mythic-glow {
+    from { box-shadow: 0 0 8px 0px var(--rarity-mythic); }
+    to   { box-shadow: 0 0 20px 6px var(--rarity-mythic); }
+}
+
+@keyframes artifact-glow {
+    from { box-shadow: 0 0 10px 0px var(--rarity-artifact); }
+    to   { box-shadow: 0 0 25px 8px var(--rarity-artifact); }
+}

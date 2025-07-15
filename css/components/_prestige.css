@@ -1,0 +1,70 @@
+/* css/components/_prestige.css */
+
+/* FIX: Le panneau principal n'est plus une grille */
+#prestige-panel h2 {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+/* FIX: La grille est maintenant appliquée au conteneur des cartes */
+#prestige-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    height: calc(100% - 60px); /* Ajuster la hauteur pour le scroll */
+    overflow-y: auto;
+}
+
+.prestige-card {
+    background-color: var(--color-surface-light);
+    border: 1px solid var(--border-color-dark);
+    border-left: 5px solid var(--color-prestige);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+.prestige-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-prestige);
+}
+
+.prestige-card h4 {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 1.1em;
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.prestige-card p {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    text-align: left;
+}
+
+.prestige-card .buy-btn {
+    margin-top: auto;
+    padding: 10px;
+    font-size: 0.9em;
+    background-color: var(--color-prestige);
+    color: white;
+    border: none;
+    box-shadow: 0 0 8px rgba(224, 64, 251, 0.5);
+}
+
+.prestige-card .buy-btn:hover:not(:disabled) {
+    background-color: #d020f0;
+    box-shadow: 0 0 12px rgba(224, 64, 251, 0.8);
+}

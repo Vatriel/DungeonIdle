@@ -1,0 +1,283 @@
+/* css/components/_tavern.css */
+/* Contient tous les styles spécifiques à la modale de la Taverne. */
+
+/* Conteneur principal de la modale de la Taverne */
+.tavern-modal-content {
+    width: 90vw;
+    height: 90vh;
+    max-width: none; /* Permet à la modale de s'étendre */
+    display: flex;
+    flex-direction: column;
+    padding: 0; 
+    background-color: var(--color-surface);
+    border-color: #8B4513; /* Marron bois */
+    border-top-color: #A0522D;
+    border-left-color: #A0522D;
+}
+
+/* En-tête de la modale */
+.tavern-modal-content .modal-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color-dark);
+    margin-bottom: 0;
+}
+
+.tavern-modal-content .modal-header h2 {
+    color: #D2691E; /* Marron plus clair */
+    text-shadow: 0 0 5px rgba(210, 105, 30, 0.5);
+}
+
+/* Affichage de la renommée dans l'en-tête */
+.header-renown-display {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--color-gold);
+    margin: 0 20px;
+    white-space: nowrap;
+}
+
+/* Corps principal de la modale, contenant les onglets */
+.tavern-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0; /* Correction pour le défilement dans un conteneur flex */
+}
+
+/* Barre des onglets */
+.tavern-body .tab-buttons {
+    border-bottom: 4px solid var(--border-color-dark);
+}
+
+.tavern-body .tab-btn {
+    background-color: var(--color-surface-light);
+    color: var(--color-text-secondary);
+}
+
+.tavern-body .tab-btn.active {
+    background-color: var(--color-background);
+    border-color: #D2691E;
+    color: #D2691E;
+}
+
+/* Contenu d'un onglet */
+.tavern-body .tab-content {
+    display: none; /* Caché par défaut */
+    flex-grow: 1;
+    flex-direction: column; 
+    overflow-y: auto; 
+    padding: 15px;
+    background-color: var(--color-background);
+}
+
+.tavern-body .tab-content.active {
+    display: flex; /* Affiché quand l'onglet est actif */
+}
+
+.tavern-body .tab-content p {
+    text-align: center;
+    font-style: italic;
+    color: var(--color-text-secondary);
+}
+
+/* --- Styles pour l'onglet Contrats --- */
+
+#contracts-columns-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.contract-column {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface);
+    padding: 10px;
+    border: 1px solid var(--border-color-dark);
+    border-radius: 4px;
+    min-height: 0;
+}
+
+.contract-column h4 {
+    margin: 0 0 10px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color-light);
+    color: var(--color-gold);
+    text-align: center;
+    font-size: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+}
+
+.contract-list {
+    display: flex; 
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 5px;
+}
+
+.contract-card {
+    background-color: var(--color-surface-light);
+    border: 2px solid var(--border-color-dark);
+    padding: 10px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color-dark);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.contract-name {
+    font-weight: bold;
+    color: var(--color-text-primary);
+    font-size: 1em;
+}
+
+.contract-type {
+    font-size: 0.8em;
+    color: var(--color-accent);
+    background-color: rgba(97, 218, 251, 0.1);
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.contract-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    margin: 0;
+    flex-grow: 1; 
+}
+
+.contract-rewards {
+    font-size: 0.85em;
+    color: var(--color-gold);
+    margin-top: 5px;
+}
+
+.contract-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.contract-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.75em;
+}
+
+#tavern-refresh-contracts-btn {
+    margin-top: 15px;
+    width: auto;
+    align-self: center;
+    background-color: var(--color-surface);
+    border-color: var(--color-text-secondary);
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+}
+#tavern-refresh-contracts-btn:hover {
+    background-color: var(--color-surface-light);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+
+.header-counter {
+    font-family: var(--font-secondary);
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+/* --- Styles pour l'onglet Marchandises --- */
+
+.goods-header-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color-dark);
+}
+
+.goods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    width: 100%;
+}
+
+.good-card {
+    background-color: var(--color-surface-light);
+    border: 1px solid var(--border-color-dark);
+    border-left: 5px solid #D2691E;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.good-icon {
+    font-size: 2em;
+    float: left;
+    margin-right: 15px;
+}
+
+.good-name {
+    font-family: var(--font-primary);
+    font-size: 1.1em;
+    color: var(--color-text-primary);
+    margin-bottom: 5px;
+}
+
+.good-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    margin: 0 0 10px 0;
+    flex-grow: 1;
+}
+
+.good-effect, .good-duration {
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.good-effect { color: var(--color-success); }
+.good-duration { color: var(--color-accent); }
+
+.good-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color-light);
+}
+
+.good-buy-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9em;
+    background-color: var(--color-gold);
+    color: var(--color-background);
+}
+
+.good-buy-btn:hover:not(:disabled) {
+    background-color: #ffec80;
+}
+
+.good-buy-btn:disabled {
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--border-color-dark);
+}

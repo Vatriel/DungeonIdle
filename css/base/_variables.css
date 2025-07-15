@@ -1,0 +1,45 @@
+/* css/base/_variables.css */
+/* Ce fichier centralise toutes les variables de design (couleurs, polices). */
+
+:root {
+    /* Polices */
+    --font-primary: 'Press Start 2P', cursive;
+    --font-secondary: 'Roboto Mono', monospace;
+
+    /* Couleurs de base */
+    --color-background: #1a1a1a;
+    --color-surface: #2a2a2a;
+    --color-surface-light: #333;
+
+    /* Couleurs de texte */
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #aaa;
+    
+    /* Couleurs d'accentuation */
+    --color-accent: #61dafb;
+    --color-gold: #ffd700;
+    --color-prestige: #e040fb;
+    --color-riposte: #8e44ad;
+
+    /* Couleurs sémantiques */
+    --color-success: #28a745;
+    --color-error: #dc3545;
+    --color-hp: #e53935;
+    --color-xp: #ffd700;
+    --color-shield: #00BFFF;
+
+    /* Couleurs de bordure */
+    --border-color-dark: #444;
+    --border-color-light: #555;
+    --border-color-highlight: #777;
+
+    /* --- MODIFICATION : SYSTÈME DE RARETÉ ÉTENDU --- */
+    --rarity-defective: #9E9E9E; /* Gris */
+    --rarity-common: #E0E0E0;     /* Blanc */
+    --rarity-magic: #8AB4F8;      /* Bleu */
+    --rarity-rare: #FDD663;       /* Jaune */
+    --rarity-epic: #BB86FC;       /* Violet */
+    --rarity-legendary: #FF8A65;  /* Orange */
+    --rarity-mythic: #F06292;     /* Rouge/Rose */
+    --rarity-artifact: #4DD0E1;   /* Cyan */
+}

@@ -1,0 +1,238 @@
+/* css/components/_panels.css */
+/* Styles pour les conteneurs principaux (panels) et le système d'onglets. */
+
+.panel {
+    background-color: var(--color-surface);
+    border: 4px solid var(--border-color-light);
+    border-top-color: var(--border-color-highlight);
+    border-left-color: var(--border-color-highlight);
+    padding: 15px;
+    width: 32%;
+    min-height: 400px;
+    position: relative; /* Assure que les éléments absolument positionnés sont relatifs à ce conteneur */
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.panel-header h2 {
+    margin: 0;
+}
+
+/* FIX: Conteneur pour les scores */
+#party-scores-container {
+    display: flex;
+    gap: 8px;
+}
+
+/* Style commun pour les deux widgets de score */
+.party-score-widget {
+    font-family: var(--font-primary);
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--border-color-dark);
+    padding: 3px 8px;
+    border-radius: 4px;
+    background-color: var(--color-background);
+}
+
+#party-power-display {
+    color: var(--color-gold);
+}
+
+/* NOUVEAU : Style pour le score de combat */
+#party-combat-rating-display {
+    color: var(--color-error);
+}
+
+
+#inventory-panel { 
+    width: 100%; 
+    margin: 0; 
+    min-height: auto; 
+    border: none; 
+    padding: 10px 0 0 0; 
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 0 15px;
+}
+
+.inventory-header h2 {
+    margin: 0;
+    display: flex; /* Ajout pour aligner le compteur */
+    align-items: baseline; /* Ajout pour aligner le compteur */
+}
+
+
+#right-panels-container { 
+    padding: 0; 
+    overflow: hidden; 
+}
+
+#enemy-panel { 
+    cursor: pointer; 
+    /* NOUVEAU : Permet un positionnement absolu du bouton de pause */
+    position: relative; 
+}
+
+/* Correction pour stabiliser la hauteur du panneau ennemi */
+#monster-area #monster-name {
+    min-height: 3em; /* Réserve l'espace pour un nom de monstre sur deux lignes */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    margin: 0; /* Assure qu'il n'y a pas de marge par défaut sur le h2 */
+}
+
+/* --- NOUVEAU : Styles pour le bouton de pause --- */
+.pause-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10; /* Assure qu'il est au-dessus des autres éléments */
+    padding: 8px 12px;
+    font-size: 0.7em;
+    background-color: var(--color-accent);
+    color: var(--color-text-light);
+    border: 2px solid var(--border-color-dark);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.pause-button:hover {
+    background-color: var(--color-accent-dark);
+    transform: translateY(-1px);
+}
+
+.pause-button:active {
+    transform: translateY(1px);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.pause-button.active-pause {
+    background-color: var(--color-error); /* Couleur différente quand la pause est active */
+}
+
+/* --- Système d'onglets --- */
+.tab-buttons {
+    display: flex;
+    border-bottom: 4px solid var(--border-color-light);
+}
+.tab-btn {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 0.8em;
+    border: none;
+    border-bottom: 4px solid transparent;
+    background-color: var(--color-surface);
+    margin-bottom: -4px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.tab-btn:hover {
+    background-color: var(--color-surface-light);
+}
+.tab-btn.active {
+    background-color: var(--color-surface-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.tab-btn.locked-tab {
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.tab-btn.locked-tab:hover {
+    background-color: var(--color-surface);
+    border-color: transparent;
+}
+
+.locked-feature-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--color-text-secondary);
+}
+
+.locked-feature-message h2 {
+    color: var(--color-gold);
+    margin-bottom: 15px;
+}
+
+.locked-feature-message p {
+    margin-bottom: 10px;
+}
+
+
+.tab-content {
+    display: none;
+    padding: 15px;
+    position: relative;
+}
+#inventory-panel.tab-content {
+    padding: 0;
+}
+#inventory-grid {
+    padding: 0 15px 15px 15px;
+}
+
+
+.tab-content.active {
+    display: block;
+}
+
+/* --- NOUVEAUX STYLES POUR LE BUTIN --- */
+#loot-container {
+    margin-top: 15px;
+    border-top: 2px solid var(--border-color-light);
+    padding-top: 10px;
+}
+
+.loot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.loot-header h4 {
+    margin: 0;
+    font-family: var(--font-primary);
+    font-size: 1em;
+    color: var(--color-text-primary);
+    display: flex; /* Ajout pour aligner le compteur */
+    align-items: baseline; /* Ajout pour aligner le compteur */
+}
+
+.loot-header .btn {
+    padding: 6px 10px;
+    font-size: 0.7em;
+}
+
+#loot-area {
+    min-height: 50px; /* Pour éviter que la zone ne s'effondre quand elle est vide */
+}
+
+/* --- DÉBUT DE LA MODIFICATION --- */
+/* NOUVEAU : Style pour les compteurs dans les en-têtes */
+.header-counter {
+    font-family: var(--font-secondary);
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+    font-weight: normal;
+    margin-left: 8px;
+}
+/* --- FIN DE LA MODIFICATION --- */

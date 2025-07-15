@@ -1,0 +1,127 @@
+/* css/components/_tavern-recruitment.css */
+/* Styles pour l'onglet de recrutement de la Taverne */
+
+.recruitment-sections-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Une colonne par défaut */
+    gap: 20px;
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .recruitment-sections-container {
+        grid-template-columns: 1fr 1fr; /* Deux colonnes sur les écrans plus larges */
+    }
+}
+
+.recruitment-section {
+    background-color: var(--color-surface);
+    border: 1px solid var(--border-color-dark);
+    border-radius: 6px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.recruitment-section h4 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-gold);
+    color: var(--color-gold);
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.recruitment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    overflow-y: auto; /* Permet le défilement si trop de cartes */
+    padding-right: 5px; /* Pour l'espace de la scrollbar */
+}
+
+.recruitment-card {
+    background-color: var(--color-background-light);
+    border: 1px solid var(--border-color-light);
+    border-left: 5px solid var(--color-accent); /* Couleur par défaut */
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.recruitment-card:hover:not(.recruited):not(.locked) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.recruitment-card h5 {
+    margin: 0;
+    font-size: 1em;
+    color: var(--color-text-primary);
+    border-bottom: 1px dashed var(--border-color-dark);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.recruitment-description {
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    flex-grow: 1;
+}
+
+.recruitment-cost {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: var(--color-gold);
+    margin-top: 5px;
+}
+
+.recruitment-card .btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.8em;
+    margin-top: 10px;
+}
+
+.recruitment-card.recruited {
+    opacity: 0.7;
+    filter: grayscale(50%);
+    border-left-color: var(--color-success);
+}
+
+.recruitment-card.locked {
+    opacity: 0.5;
+    filter: grayscale(80%);
+    border-left-color: var(--color-text-secondary);
+}
+
+.unlock-conditions {
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+    margin-top: 5px;
+    text-align: center;
+}
+
+/* Styles spécifiques pour les cartes de héros */
+.recruitment-card .recruit-hero-btn {
+    background-color: var(--color-accent);
+    color: var(--color-background);
+}
+.recruitment-card .recruit-hero-btn:hover:not(:disabled) {
+    background-color: #4CAF50; /* Vert un peu plus clair */
+}
+
+/* Styles spécifiques pour les cartes de spécialistes */
+.recruitment-card .recruit-specialist-btn {
+    background-color: #D2691E; /* Marron pour le thème de la taverne */
+    color: white;
+}
+.recruitment-card .recruit-specialist-btn:hover:not(:disabled) {
+    background-color: #A0522D; /* Marron plus foncé */
+}

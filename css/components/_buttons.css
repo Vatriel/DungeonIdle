@@ -1,0 +1,163 @@
+/* css/components/_buttons.css */
+/* Styles pour tous les boutons de l'application. */
+
+button {
+    font-family: var(--font-primary), cursive;
+    font-size: 0.7em;
+    border: 2px solid var(--border-color-dark);
+    border-top-color: var(--border-color-highlight);
+    border-left-color: var(--border-color-highlight);
+    background-color: var(--color-surface-light);
+    color: var(--color-text-primary);
+    padding: 8px 12px;
+    cursor: pointer;
+}
+button:hover:not(:disabled) {
+    background-color: var(--border-color-dark);
+}
+button:active:not(:disabled) {
+    border-top-color: var(--border-color-dark);
+    border-left-color: var(--border-color-dark);
+    border-bottom-color: var(--border-color-highlight);
+    border-right-color: var(--border-color-highlight);
+}
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* MODIFICATION : Ajout d'une classe générique pour les boutons d'utilité */
+.utility-btn {
+    background-color: var(--color-surface);
+    border-color: var(--border-color-light);
+    color: var(--color-accent);
+}
+.utility-btn:hover:not(:disabled) {
+    background-color: var(--color-surface-light);
+    border-color: var(--color-accent);
+}
+
+
+.item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-left: 10px;
+}
+.item-action-btn {
+    padding: 8px 12px;
+}
+
+.utility-icon-btn {
+    font-size: 1.2em;
+    padding: 5px 8px;
+    background: none;
+    border: 2px solid var(--border-color-light);
+}
+.utility-icon-btn:hover {
+    border-color: var(--border-color-highlight);
+    color: #fff;
+}
+
+#boost-heal-btn {
+    font-size: 1.5em;
+    padding: 0;
+    line-height: 1;
+    background: none;
+    border: none;
+    color: var(--color-hp);
+    text-shadow: 0 0 8px var(--color-hp);
+    animation: pulse-heart 1.5s infinite;
+}
+
+#boost-heal-btn:hover {
+    transform: scale(1.1);
+}
+
+.buy-btn {
+    background-color: var(--color-gold);
+    color: var(--color-background);
+}
+.buy-btn:hover:not(:disabled) {
+    background-color: #ffec80;
+}
+
+.pickup-btn {
+    background-color: var(--color-success);
+    color: white;
+}
+.pickup-btn:hover {
+    background-color: #218838;
+}
+
+.discard-btn {
+    background-color: var(--color-error);
+    color: white;
+}
+.discard-btn:hover {
+    background-color: #c82333;
+}
+
+#soft-reset-btn {
+    background-color: var(--color-error);
+    color: white;
+    box-shadow: none;
+}
+#soft-reset-btn:hover {
+    background-color: #c82333;
+}
+
+#prestige-btn {
+    background-color: var(--color-prestige);
+    color: white;
+    box-shadow: 0 0 8px var(--color-prestige);
+}
+#prestige-btn:hover {
+    background-color: #c82333;
+}
+
+.shop-header-controls {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.refresh-shop-btn {
+    border: none;
+    background: none;
+    color: var(--color-gold);
+    font-size: 1.8em;
+    padding: 0;
+    line-height: 1;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+    transition: transform 0.3s ease-in-out, text-shadow 0.2s;
+}
+.refresh-shop-btn:hover:not(:disabled) {
+    transform: rotate(180deg);
+}
+.shop-utility-btn {
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 1.8em;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+.shop-utility-btn:hover {
+    background: none;
+    color: var(--color-text-primary);
+}
+.shop-utility-btn.active {
+    color: var(--color-gold);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+}
+
+@keyframes pulse-heart {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
